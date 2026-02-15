@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { TrustPanel, TrustMetadata } from "./components/trust-panel";
+
 type ResearchJobSummary = {
   job_id: string;
   title: string;
@@ -68,6 +70,7 @@ type ResearchJob = {
   infographic_spec: InfographicSpec;
   article: ResearchArticle;
   sources: ResearchSource[];
+  trust: TrustMetadata;
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";

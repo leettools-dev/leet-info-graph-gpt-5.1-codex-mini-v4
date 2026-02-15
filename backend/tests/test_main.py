@@ -1,4 +1,5 @@
 import io
+import json
 import zipfile
 from datetime import datetime
 
@@ -47,6 +48,8 @@ async def test_research_job_flow():
     assert article["detailed_explanation"]
     assert article["confidence_note"]
     assert article["implications"]
+    assert job_data["trust"]["confidence_level"]
+    assert job_data["trust"]["provenance"]
     expected_headings = {
         "Overview",
         "Key points",

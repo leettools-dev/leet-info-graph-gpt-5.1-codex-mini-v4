@@ -16,10 +16,12 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-- Added backend endpoint `/research-jobs/{job_id}/package` that bundles the article markdown, infographic spec, and citation metadata (JSON/CSV) into a downloadable ZIP to reduce friction when collecting both infographic and article assets.
+- Added backend endpoint `/research-jobs/{job_id}/package` that bundles the article markdown, infographic spec, citation metadata (JSON/CSV), and trust metadata into a downloadable ZIP to reduce friction when collecting both infographic and article assets.
 - Extended backend article helpers/tests to produce markdown + CSV outputs for the shareable package and validated ZIP contents.
-- Documented the shareable package quick download flow to guide users on retrieving the bundled PNG, article, and citation pack.
-- Introduced a shareable package download button that fetches `/research-jobs/{job_id}/package`, generating a zip bundle with article markdown, infographic spec, and citation metadata to reduce the steps required for sharing results.
+- Documented the shareable package quick download flow to guide users on retrieving the bundled PNG, article, citation pack, and trust metadata.
+- Introduced a shareable package download button that fetches `/research-jobs/{job_id}/package`, generating a zip bundle with article markdown, infographic spec, citation metadata, and trust metadata to reduce the steps required for sharing results.
+- Added trust metadata (confidence levels, reliability summary, provenance records) to the job outputs so clients can explain citation confidence and trace the research pipeline.
+- Added frontend trust callouts that highlight confidence, citation reliability, and provenance context to help users assess the credibility of each result.
 
 ## Getting Started
 
@@ -27,8 +29,7 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 - Python 3.12+ (backend) and Node 20+ (frontend).
 - Docker & Docker Compose for full-stack runs.
-- Copy `.env.sample` to `.env` and define the placeholders: `BACKEND_PORT`, `FRONTEND_PORT`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
-
+- Copy `.env.sample` to `.env` and define the placeholders: `BACKEND_PORT`, `FRONTEND_PORT`, `NEXT_PUBLIC_API_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
 ### Installation
 
 ```bash
@@ -42,8 +43,8 @@ cd frontend && npm install
 
 ### Usage
 
-- Use the “Download shareable package” button on the result page to retrieve a ZIP containing the article markdown, infographic spec, and citation metadata in JSON/CSV so you can share a complete, cited bundle without manual downloads.
-
+- Use the “Download shareable package” button on the result page to retrieve a ZIP containing the article markdown, infographic spec, citation metadata (JSON/CSV), and trust metadata so you can share a complete, trusted bundle.
+- View the trust panel embedded on the result page to inspect confidence levels, reliability scores, and provenance records tied to each research job.
 # Usage examples will be added
 ```
 
@@ -53,6 +54,7 @@ cd frontend && npm install
 - Frontend exposes a “Download shareable package” CTA that hits the new endpoint and saves the bundle locally so the user can immediately share infographic/article/citations together.
 - Documented the shareable bundle feature and export instructions for the Research Infographic Studio quick start flow.
 - Added Next.js `layout.tsx`, `globals.css`, and `next-env.d.ts` artifacts to satisfy the App Router expectations while keeping the UI theme consistent.
+- Added frontend trust callouts that highlight confidence, citation reliability, and provenance context to help users assess the credibility of each result.
 
 ## Testing
 
