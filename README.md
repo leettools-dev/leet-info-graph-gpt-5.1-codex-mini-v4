@@ -16,7 +16,7 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-- Implemented the Research Infographic Studio quick start guide including startup/shutdown scripts, logging, and PID management.
+- Extended README features to include backend tests and structured infographic generation APIs tied to the Research Infographic Studio initiative.
 ## Getting Started
 
 ### Prerequisites
