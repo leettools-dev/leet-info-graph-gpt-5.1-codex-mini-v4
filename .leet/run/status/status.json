@@ -1,9 +1,9 @@
 {
-  "state": "build_failed",
+  "state": "building",
   "workspace_path": "/usr/local/leettools/repo/leet-info-graph-gpt-5.1-codex-mini-v4",
-  "message": "docker compose up failed (exit 1)\nstdout:\n#1 [internal] load local bake definitions\n#1 reading from stdin 874B done\n#1 DONE 0.0s\n\n#2 [backend internal] load build definition from Dockerfile\n#2 transferring dockerfile: 2B done\n#2 DONE 0.0s\n\n#3 [frontend internal] load build definition from Dockerfile\n#3 transferring dockerfile: 2B done\n#3 DONE 0.0s\n\nstderr:\ntime=\"2026-02-15T11:57:16-08:00\" level=warning msg=\"/usr/local/leettools/repo/leet-info-graph-gpt-5.1-codex-mini-v4/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion\"\ntarget backend: failed to solve: failed to read dockerfile: open Dockerfile: no such file or directory\n\n\n\nView build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/lok2oef6vpobv6wtjenky8zfu\n\n",
-  "last_change_detected": "2026-02-15T19:57:16.617033+00:00",
-  "timestamp": "2026-02-15T19:57:17.386069+00:00",
+  "message": "",
+  "last_change_detected": "2026-02-15T19:57:32.431500+00:00",
+  "timestamp": "2026-02-15T19:57:32.431527+00:00",
   "services": [],
-  "log_file": "/usr/local/leettools/repo/leet-info-graph-gpt-5.1-codex-mini-v4/.leet/run/logs/build.log"
+  "log_file": ""
 }
