@@ -16,9 +16,8 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-- Documented how to run the app via docker compose and inspect logs for both frontend and backend services.
-- Ensured backend Dockerfile uses the correct uvicorn entrypoint to load the FastAPI application.
-
+- Dockerized backend and frontend services with uvicorn and npm dev server exposed via docker-compose.
+- `docker compose up` brings both services online for local development and testing.
 ## Getting Started
 
 ### Prerequisites
