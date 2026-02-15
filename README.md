@@ -16,7 +16,8 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-- Added backend modeling for parent/child jobs and versioning so refine flows can link new outputs back to the original job.
+- Documented how to run the app via docker compose and inspect logs for both frontend and backend services.
+- Ensured backend Dockerfile uses the correct uvicorn entrypoint to load the FastAPI application.
 
 ## Getting Started
 
