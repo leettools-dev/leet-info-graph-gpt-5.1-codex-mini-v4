@@ -16,8 +16,8 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-- Dockerized backend and frontend services with uvicorn and npm dev server exposed via docker-compose.
-- `docker compose up` brings both services online for local development and testing.
+- Verified Docker-based setup by running `docker compose up` via the docker-runner tool and confirmed backend/frontend services start.
+
 ## Getting Started
 
 ### Prerequisites
