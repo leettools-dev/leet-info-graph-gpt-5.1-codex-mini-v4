@@ -5,14 +5,15 @@ import os
 import textwrap
 import zipfile
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Set
 from uuid import uuid4
 from enum import Enum
+from math import ceil
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -123,6 +124,57 @@ class ProgressStep(BaseModel):
     completed: bool
     timestamp: datetime
 
+class SignInRequest(BaseModel):
+    user_id: str = Field(..., min_length=3, description="Pseudo user identifier for activation tracking")
+
+
+class ActivationMetrics(BaseModel):
+    signed_in_users: int
+    users_with_job: int
+    jobs_total: int
+    activation_rate: float
+    activation_goal: int
+    cta_message: str
+    last_updated: datetime
+
+
+ACTIVATION_GOAL_PERCENT = 40
+
+
+class UserActivityStore:
+    def __init__(self) -> None:
+        self._signed_in_users: Set[str] = set()
+        self._users_with_job: Set[str] = set()
+        self._last_updated: datetime = datetime.utcnow()
+
+    def register_sign_in(self, user_id: str) -> None:
+        cleaned = (user_id or "anonymous").strip() or "anonymous"
+        self._signed_in_users.add(cleaned)
+        self._last_updated = datetime.utcnow()
+
+    def register_job(self, user_id: str) -> None:
+        cleaned = (user_id or "anonymous").strip() or "anonymous"
+        self._signed_in_users.add(cleaned)
+        self._users_with_job.add(cleaned)
+        self._last_updated = datetime.utcnow()
+
+    def clear(self) -> None:
+        self._signed_in_users.clear()
+        self._users_with_job.clear()
+        self._last_updated = datetime.utcnow()
+
+    def signed_in_count(self) -> int:
+        return len(self._signed_in_users)
+
+    def users_with_job_count(self) -> int:
+        return len(self._users_with_job)
+
+    def last_updated(self) -> datetime:
+        return self._last_updated
+
+
+USER_ACTIVITY = UserActivityStore()
+
 
 class SourceExportFormat(str, Enum):
     json = "json"
@@ -156,10 +208,12 @@ class ResearchJobSummary(BaseModel):
     updated_at: datetime
     prompt_snippet: str
     version: int
+    user_id: str
 
 
 class ResearchJobCreate(BaseModel):
     prompt: str = Field(..., min_length=10, description="User prompt describing the research request")
+    user_id: Optional[str] = Field(None, min_length=3, description="Optional pseudo user identifier for activation tracking")
     settings: Optional[ResearchJobSettings] = None
     trust_targets: Optional[List[str]] = Field(None, description="Optional target signals to highlight in trust metadata. Example: ['confidence', 'provenance']")
 
@@ -196,6 +250,7 @@ class JobStore:
                 updated_at=job.updated_at,
                 prompt_snippet=job.prompt[:80].strip(),
                 version=job.version,
+                user_id=job.user_id,
             )
             for job in self.list_jobs()
         ]
@@ -215,9 +270,11 @@ class JobStore:
         settings: ResearchJobSettings,
         trust_targets: Optional[List[str]] = None,
         parent_job: Optional[ResearchJob] = None,
+        user_id: Optional[str] = None,
     ) -> ResearchJob:
         job_id = uuid4().hex
         timestamp = datetime.utcnow()
+        assigned_user_id = (user_id or "anonymous").strip() or "anonymous"
         sources = _generate_sources(prompt)
         article = _generate_article(prompt, sources, settings)
         spec = _generate_infographic_spec(prompt, sources)
@@ -228,6 +285,7 @@ class JobStore:
 
         job = ResearchJob(
             job_id=job_id,
+            user_id=assigned_user_id,
             prompt=prompt,
             summary=article.overview,
             status="completed",
@@ -245,6 +303,7 @@ class JobStore:
             progress=progress,
         )
         self._jobs.append(job)
+        USER_ACTIVITY.register_job(assigned_user_id)
         return job
 
     def latest_summary(self) -> Optional[ResearchSummary]:
@@ -512,6 +571,32 @@ def _generate_trust_metadata(
     )
 
 
+def _build_activation_cta(signed_in: int, users_with_job: int) -> str:
+    if signed_in == 0:
+        return "Invite your first researcher to generate a research job."
+    activation_rate = (users_with_job / signed_in) * 100 if signed_in else 0
+    if activation_rate >= ACTIVATION_GOAL_PERCENT:
+        return "Activation goal met—thank you for driving research generation!"
+    needed = max(0, ceil((ACTIVATION_GOAL_PERCENT / 100) * signed_in) - users_with_job)
+    return f"Invite {needed} more signed-in users to generate a research result to reach {ACTIVATION_GOAL_PERCENT}% activation."
+
+
+def _build_activation_metrics() -> ActivationMetrics:
+    signed_in = USER_ACTIVITY.signed_in_count()
+    users_with_job = USER_ACTIVITY.users_with_job_count()
+    jobs_total = len(JOB_STORE.list_jobs())
+    activation_rate = round((users_with_job / signed_in) * 100, 2) if signed_in else 0.0
+    return ActivationMetrics(
+        signed_in_users=signed_in,
+        users_with_job=users_with_job,
+        jobs_total=jobs_total,
+        activation_rate=activation_rate,
+        activation_goal=ACTIVATION_GOAL_PERCENT,
+        cta_message=_build_activation_cta(signed_in, users_with_job),
+        last_updated=USER_ACTIVITY.last_updated(),
+    )
+
+
 def _generate_progress(start: datetime) -> List[ProgressStep]:
     stages = ["Queued", "Researching", "Writing", "Rendering", "Completed"]
     steps = []
@@ -662,6 +747,17 @@ def _build_placeholder_trust(source_id: str = "src-placeholder") -> TrustMetadat
     )
 
 
+@app.post("/activation/sign-in", status_code=204)
+async def register_activation_sign_in(payload: SignInRequest) -> Response:
+    USER_ACTIVITY.register_sign_in(payload.user_id)
+    return Response(status_code=204)
+
+
+@app.get("/activation/metrics", response_model=ActivationMetrics)
+async def activation_metrics() -> ActivationMetrics:
+    return _build_activation_metrics()
+
+
 @app.get("/research-summary", response_model=ResearchSummary)
 async def research_summary() -> ResearchSummary:
     summary = JOB_STORE.latest_summary()
@@ -694,11 +790,14 @@ async def create_research_job(payload: ResearchJobCreate) -> ResearchJob:
     if not payload.prompt.strip():
         raise HTTPException(status_code=422, detail="Prompt cannot be empty")
     settings = payload.settings or ResearchJobSettings()
+    if payload.user_id:
+        USER_ACTIVITY.register_sign_in(payload.user_id)
     job = JOB_STORE.create_job(
         payload.prompt.strip(),
         settings,
         trust_targets=payload.trust_targets,
         parent_job=None,
+        user_id=payload.user_id,
     )
     return job
 
