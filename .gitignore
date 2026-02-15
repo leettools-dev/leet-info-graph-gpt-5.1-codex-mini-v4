@@ -44,4 +44,6 @@ Thumbs.db
 .code_project_state.json
 .env
 .env.local
+logs/
+pids/
 *.log

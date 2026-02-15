@@ -16,23 +16,29 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-*Features will be documented here as they are implemented.*
-
+- Implemented the Research Infographic Studio quick start guide including startup/shutdown scripts, logging, and PID management.
 ## Getting Started
 
 ### Prerequisites
 
-*Prerequisites will be documented here.*
-
+- Python 3.12+ (backend)
+- Node 20+ (frontend)
+- Docker & Docker Compose
+- Git LFS if storing large assets
 ### Installation
 
 ```bash
+pip install -r backend/requirements.txt
+cd frontend && npm install
+```
 # Installation instructions will be added
 ```
 
 ### Usage
 
 ```bash
+./start.sh  # Launch backend & frontend services
+```
 # Usage examples will be added
 ```
 
