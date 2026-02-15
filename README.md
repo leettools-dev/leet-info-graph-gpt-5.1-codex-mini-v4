@@ -16,12 +16,7 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-- Added backend endpoint `/research-jobs/{job_id}/package` that bundles the article markdown, infographic spec, citation metadata (JSON/CSV), and trust metadata into a downloadable ZIP to reduce friction when collecting both infographic and article assets.
-- Extended backend article helpers/tests to produce markdown + CSV outputs for the shareable package and validated ZIP contents.
-- Documented the shareable package quick download flow to guide users on retrieving the bundled PNG, article, citation pack, and trust metadata.
-- Introduced a shareable package download button that fetches `/research-jobs/{job_id}/package`, generating a zip bundle with article markdown, infographic spec, citation metadata, and trust metadata to reduce the steps required for sharing results.
-- Added trust metadata (confidence levels, reliability summary, provenance records) to the job outputs so clients can explain citation confidence and trace the research pipeline.
-- Added frontend trust callouts that highlight confidence, citation reliability, and provenance context to help users assess the credibility of each result.
+- Added backend modeling for parent/child jobs and versioning so refine flows can link new outputs back to the original job.
 
 ## Getting Started
 

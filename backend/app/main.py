@@ -2,15 +2,18 @@ import csv
 import io
 import json
 import os
+import textwrap
 import zipfile
 from datetime import datetime, timedelta
 from typing import List, Optional
 from uuid import uuid4
+from enum import Enum
 
 from fastapi import FastAPI, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
+from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel, Field, HttpUrl
 
 
@@ -121,12 +124,18 @@ class ProgressStep(BaseModel):
     timestamp: datetime
 
 
+class SourceExportFormat(str, Enum):
+    json = "json"
+    csv = "csv"
+
+
 class ResearchJob(BaseModel):
     job_id: str
     prompt: str
     summary: str
     status: str
     version: int
+    parent_job_id: Optional[str] = None
     settings: ResearchJobSettings
     created_at: datetime
     updated_at: datetime
@@ -151,6 +160,12 @@ class ResearchJobSummary(BaseModel):
 
 class ResearchJobCreate(BaseModel):
     prompt: str = Field(..., min_length=10, description="User prompt describing the research request")
+    settings: Optional[ResearchJobSettings] = None
+    trust_targets: Optional[List[str]] = Field(None, description="Optional target signals to highlight in trust metadata. Example: ['confidence', 'provenance']")
+
+
+class ResearchJobRefine(BaseModel):
+    prompt: Optional[str] = Field(None, min_length=10, description="Optional override prompt for refinements")
     settings: Optional[ResearchJobSettings] = None
     trust_targets: Optional[List[str]] = Field(None, description="Optional target signals to highlight in trust metadata. Example: ['confidence', 'provenance']")
 
@@ -199,6 +214,7 @@ class JobStore:
         prompt: str,
         settings: ResearchJobSettings,
         trust_targets: Optional[List[str]] = None,
+        parent_job: Optional[ResearchJob] = None,
     ) -> ResearchJob:
         job_id = uuid4().hex
         timestamp = datetime.utcnow()
@@ -207,13 +223,16 @@ class JobStore:
         spec = _generate_infographic_spec(prompt, sources)
         progress = _generate_progress(timestamp)
         trust_metadata = _generate_trust_metadata(article, sources, trust_targets)
+        version = parent_job.version + 1 if parent_job else 1
+        parent_job_id = parent_job.job_id if parent_job else None
 
         job = ResearchJob(
             job_id=job_id,
             prompt=prompt,
             summary=article.overview,
             status="completed",
-            version=1,
+            version=version,
+            parent_job_id=parent_job_id,
             settings=settings,
             created_at=timestamp,
             updated_at=timestamp,
@@ -676,7 +695,10 @@ async def create_research_job(payload: ResearchJobCreate) -> ResearchJob:
         raise HTTPException(status_code=422, detail="Prompt cannot be empty")
     settings = payload.settings or ResearchJobSettings()
     job = JOB_STORE.create_job(
-        payload.prompt.strip(), settings, trust_targets=payload.trust_targets
+        payload.prompt.strip(),
+        settings,
+        trust_targets=payload.trust_targets,
+        parent_job=None,
     )
     return job
 
