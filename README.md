@@ -16,7 +16,7 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-- Extended README features to include backend tests and structured infographic generation APIs tied to the Research Infographic Studio initiative.
+- Added structured article rendering pipeline that returns strongly typed sections, inline citations, confidence notes, implications, and a sourced explanatory narrative alongside each research job result.
 ## Getting Started
 
 ### Prerequisites

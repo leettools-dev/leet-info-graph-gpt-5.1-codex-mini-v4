@@ -39,15 +39,24 @@ type ResearchSource = {
   snippet: string;
   reliability_score: number;
   accessed_at: string;
+  citation_index: number;
+};
+
+type ArticleHighlight = {
+  text: string;
+  citations: number[];
 };
 
 type ResearchArticle = {
   title: string;
   overview: string;
-  key_points: string[];
+  key_points: ArticleHighlight[];
   confidence: string;
+  confidence_note: string;
   limitations: string;
-  sections: { heading: string; body: string; citations: string[] }[];
+  detailed_explanation: string;
+  implications: ArticleHighlight[];
+  sections: { heading: string; body: string; citations: number[] }[];
 };
 
 type ResearchJob = {
@@ -200,6 +209,25 @@ export default function HomePage() {
     );
   }
 
+  const sortedSources = [...job.sources].sort((a, b) => a.citation_index - b.citation_index);
+
+  const renderCitations = (citations: number[]) => {
+    if (!citations.length) {
+      return null;
+    }
+    return citations.map((citation, index) => (
+      <a
+        key={`${citation}-${index}`}
+        href={`#source-${citation}`}
+        className="text-xs text-indigo-300 underline"
+      >
+        [{citation}]
+      </a>
+    ));
+  };
+
+  const detailedSection = job.article.sections.find((section) => section.heading === "Detailed explanation");
+
   return (
     <main className="min-h-screen px-4 py-12 md:px-16">
       <section className="mx-auto max-w-6xl space-y-8">
@@ -225,9 +253,15 @@ export default function HomePage() {
               <h2 className="text-lg font-semibold">Article overview</h2>
               <p className="text-sm text-slate-200">{job.article.overview}</p>
               <div className="grid gap-3">
-                {job.article.key_points.map((point) => (
-                  <div key={point} className="rounded-2xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-300">
-                    {point}
+                {job.article.key_points.map((point, index) => (
+                  <div
+                    key={`${point.text}-${index}`}
+                    className="rounded-2xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-200"
+                  >
+                    <p>{point.text}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {renderCitations(point.citations)}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -236,14 +270,42 @@ export default function HomePage() {
                 <p>{job.article.limitations}</p>
               </div>
             </div>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-3">
+              <h2 className="text-lg font-semibold">Implications / applications</h2>
+              <div className="grid gap-3">
+                {job.article.implications.map((implication, index) => (
+                  <div key={`${implication.text}-${index}`} className="rounded-2xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-200">
+                    <p>{implication.text}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {renderCitations(implication.citations)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-2">
+              <h2 className="text-lg font-semibold">Confidence / uncertainty notes</h2>
+              <p className="text-sm text-slate-200">{job.article.confidence_note}</p>
+            </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-4">
-              <h2 className="text-lg font-semibold">Article sections</h2>
+              <h2 className="text-lg font-semibold">Detailed explanation</h2>
+              <p className="text-sm text-slate-200">{job.article.detailed_explanation}</p>
+              {detailedSection && detailedSection.citations.length > 0 && (
+                <div className="flex flex-wrap gap-2 text-xs text-indigo-300">
+                  {renderCitations(detailedSection.citations)}
+                </div>
+              )}
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-4">
+              <h2 className="text-lg font-semibold">Structured narrative</h2>
               <div className="space-y-3">
                 {job.article.sections.map((section) => (
                   <div key={section.heading} className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
                     <p className="text-xs uppercase tracking-wide text-slate-500">{section.heading}</p>
                     <p className="text-sm text-slate-200">{section.body}</p>
-                    <p className="text-xs text-slate-500">Citations: {section.citations.join(" ")}</p>
+                    <div className="flex flex-wrap gap-2 text-xs text-indigo-300">
+                      {renderCitations(section.citations)}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -253,10 +315,14 @@ export default function HomePage() {
             <div className="rounded-3xl border border-white/10 bg-white/5 p-4 space-y-3">
               <h3 className="text-xs uppercase tracking-[0.4em] text-slate-400">Sources</h3>
               <div className="space-y-3">
-                {job.sources.map((source) => (
-                  <div key={source.id} className="rounded-2xl border border-slate-800 bg-slate-950 p-3">
+                {sortedSources.map((source) => (
+                  <div
+                    key={source.id}
+                    id={`source-${source.citation_index}`}
+                    className="rounded-2xl border border-slate-800 bg-slate-950 p-3"
+                  >
+                    <p className="text-xs uppercase tracking-wide text-slate-500">[{source.citation_index}] {source.publisher}</p>
                     <p className="text-sm font-semibold text-white">{source.title}</p>
-                    <p className="text-xs text-slate-500">{source.publisher}</p>
                     <p className="text-xs text-slate-400">{source.snippet}</p>
                     <a
                       href={source.url}

@@ -46,21 +46,30 @@ class ResearchSource(BaseModel):
     accessed_at: datetime
     snippet: str
     reliability_score: float = Field(..., ge=0.0, le=1.0)
+    citation_index: int = Field(..., ge=1, description="1-based citation index used throughout the article")
 
 
 class ArticleSection(BaseModel):
     heading: str
     body: str
-    citations: List[str]
+    citations: List[int]
+
+
+class ArticleHighlight(BaseModel):
+    text: str
+    citations: List[int]
 
 
 class ResearchArticle(BaseModel):
     title: str
     overview: str
-    key_points: List[str]
+    key_points: List[ArticleHighlight]
     sections: List[ArticleSection]
     confidence: str
     limitations: str
+    confidence_note: str
+    implications: List[ArticleHighlight]
+    detailed_explanation: str
 
 
 class InfographicBlock(BaseModel):
@@ -241,6 +250,7 @@ def _generate_sources(prompt: str) -> List[ResearchSource]:
             accessed_at=now,
             snippet=template["snippet"],
             reliability_score=round(0.65 + idx * 0.1, 2),
+            citation_index=idx,
         )
         sources.append(source)
     return sources
@@ -253,35 +263,72 @@ def _generate_article(prompt: str, sources: List[ResearchSource], settings: Rese
         f"A concise summary of {topic.lower()} research generated for {settings.audience or 'general'} readers."
     )
     key_points = [
-        f"Top insight from {sources[0].publisher} [{sources[0].id}]: {sources[0].snippet}",
-        f"Context from {sources[1].publisher} [{sources[1].id}] helps explain adoption cadence.",
-        f"Benchmarking data from {sources[2].publisher} [{sources[2].id}] surfaces measurable impact."
-    ]
-    sections = [
-        ArticleSection(
-            heading="Overview",
-            body=f"{overview} The prompt emphasized {prompt.lower()} and the need for shareable visuals.",
-            citations=[sources[0].id],
+        ArticleHighlight(
+            text=f"{sources[0].publisher} highlights that {topic.lower()} maturity is accelerating in sustainability programs.",
+            citations=[sources[0].citation_index],
         ),
-        ArticleSection(
-            heading="Key insights",
-            body="""
-Analyzed sources reveal a pattern of accelerated adoption when teams pair AI planning with strong change management.
-""",
-            citations=[sources[1].id, sources[2].id],
+        ArticleHighlight(
+            text=f"{sources[1].publisher} emphasizes people + process adaptations when teams pair AI insights with change management.",
+            citations=[sources[1].citation_index],
         ),
-        ArticleSection(
-            heading="Confidence & limitations",
-            body="""
-Confidence is high for macro trends because multiple publishers align, but the timeline depends on emerging regulations.
-""",
-            citations=[sources[0].id, sources[2].id],
+        ArticleHighlight(
+            text=f"{sources[2].publisher} provides benchmark data that quantifies {topic.lower()} adoption impact across industries.",
+            citations=[sources[2].citation_index],
         ),
     ]
+    detailed_explanation = (
+        f"The research synthesizes practitioner stories, benchmark data, and expert analysis to explain why {topic.lower()} momentum is higher where adoption is paired with governance and executive sponsorship."
+    )
+    confidence = "High confidence based on corroborated reports and expert summaries."
     limitations = (
         "Forecasts rely on published sources and may not reflect the very latest announcements or proprietary datasets."
     )
-    confidence = "High confidence based on corroborated reports and expert summaries."
+    confidence_note = (
+        "Confidence stays high because multiple independent publishers report the same macro trends, but the timeline and impact estimates remain tentative until more public data is released."
+    )
+    implications = [
+        ArticleHighlight(
+            text=f"Research and strategy teams can reuse the shared article + infographic to brief stakeholders on {topic.lower()} progress with citations ready for export.",
+            citations=[sources[1].citation_index],
+        ),
+        ArticleHighlight(
+            text=f"Benchmarking outcomes from {sources[2].publisher} justify experimenting with lightweight pilots before scaling to portfolio-wide programs.",
+            citations=[sources[2].citation_index],
+        ),
+    ]
+    source_indices = [source.citation_index for source in sources]
+    sections = [
+        ArticleSection(
+            heading="Overview",
+            body=overview,
+            citations=[sources[0].citation_index],
+        ),
+        ArticleSection(
+            heading="Key points",
+            body=f"The key takeaways above capture how practitioners, change leaders, and benchmark data describe the path to {topic.lower()}.",
+            citations=source_indices[:3],
+        ),
+        ArticleSection(
+            heading="Detailed explanation",
+            body=detailed_explanation,
+            citations=source_indices[:3],
+        ),
+        ArticleSection(
+            heading="Implications / applications",
+            body="Teams can adopt the proactive planning, governance checkpoints, and measurement routines documented in the sources list.",
+            citations=source_indices[1:3],
+        ),
+        ArticleSection(
+            heading="Limitations / uncertainties",
+            body=limitations,
+            citations=[sources[2].citation_index],
+        ),
+        ArticleSection(
+            heading="Sources",
+            body="Consult the enumerated sources below for URLs, snippets, and publishing context.",
+            citations=source_indices,
+        ),
+    ]
     return ResearchArticle(
         title=title,
         overview=overview,
@@ -289,6 +336,9 @@ Confidence is high for macro trends because multiple publishers align, but the t
         sections=sections,
         confidence=confidence,
         limitations=limitations,
+        confidence_note=confidence_note,
+        implications=implications,
+        detailed_explanation=detailed_explanation,
     )
 
 
@@ -350,6 +400,7 @@ async def research_summary() -> ResearchSummary:
         return summary
 
     placeholder_source = ResearchSource(
+        citation_index=1,
         id="src-placeholder",
         title="Research Infographic Studio placeholder",
         publisher="Research Lab",
