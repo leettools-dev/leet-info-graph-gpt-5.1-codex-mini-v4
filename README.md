@@ -55,12 +55,11 @@ cd frontend && npm install
 
 ### Testing
 
-Run tests from the root:
+We typically run the entire docker-compose stack instead of individual test suites for each service to verify they start correctly together.
 
-```
-pytest backend/tests
-npm --prefix frontend test
-```
+- `docker compose up`: Starts backend (uvicorn) and frontend (npm run dev) services via Docker Compose.
+- Monitor `docker compose logs` or docker-runner logs to ensure both services log startup completion without errors.
+- Confirm the backend is reachable at `http://localhost:8000` and frontend at `http://localhost:3000` before considering the stack healthy.
 
 # Test instructions will be added
 ```
