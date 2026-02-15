@@ -97,6 +97,24 @@ class InfographicSpec(BaseModel):
     callouts: List[str]
 
 
+class ProvenanceRecord(BaseModel):
+    id: str
+    phase: str
+    summary: str
+    detail: Optional[str] = None
+    source_ids: List[str]
+    timestamp: datetime
+
+
+class TrustMetadata(BaseModel):
+    confidence_level: str
+    confidence_note: str
+    reliability_summary: str
+    average_reliability_score: float = Field(..., ge=0.0, le=1.0)
+    last_verified_at: datetime
+    provenance: List[ProvenanceRecord]
+
+
 class ProgressStep(BaseModel):
     name: str
     completed: bool
@@ -117,6 +135,7 @@ class ResearchJob(BaseModel):
     infographic_spec: InfographicSpec
     article: ResearchArticle
     sources: List[ResearchSource]
+    trust: TrustMetadata
     progress: List[ProgressStep]
 
 
@@ -133,6 +152,7 @@ class ResearchJobSummary(BaseModel):
 class ResearchJobCreate(BaseModel):
     prompt: str = Field(..., min_length=10, description="User prompt describing the research request")
     settings: Optional[ResearchJobSettings] = None
+    trust_targets: Optional[List[str]] = Field(None, description="Optional target signals to highlight in trust metadata. Example: ['confidence', 'provenance']")
 
 
 class ResearchSummary(BaseModel):
@@ -141,6 +161,7 @@ class ResearchSummary(BaseModel):
     key_takeaways: List[str]
     sources: List[ResearchSource]
     confidence: str
+    trust: TrustMetadata | None = None
 
 
 class JobStore:
@@ -173,13 +194,19 @@ class JobStore:
     def clear(self) -> None:
         self._jobs.clear()
 
-    def create_job(self, prompt: str, settings: ResearchJobSettings) -> ResearchJob:
+    def create_job(
+        self,
+        prompt: str,
+        settings: ResearchJobSettings,
+        trust_targets: Optional[List[str]] = None,
+    ) -> ResearchJob:
         job_id = uuid4().hex
         timestamp = datetime.utcnow()
         sources = _generate_sources(prompt)
         article = _generate_article(prompt, sources, settings)
         spec = _generate_infographic_spec(prompt, sources)
         progress = _generate_progress(timestamp)
+        trust_metadata = _generate_trust_metadata(article, sources, trust_targets)
 
         job = ResearchJob(
             job_id=job_id,
@@ -195,6 +222,7 @@ class JobStore:
             infographic_spec=spec,
             article=article,
             sources=sources,
+            trust=trust_metadata,
             progress=progress,
         )
         self._jobs.append(job)
@@ -210,6 +238,7 @@ class JobStore:
             key_takeaways=latest.article.key_points[:3],
             sources=latest.sources[:3],
             confidence=latest.article.confidence,
+            trust=latest.trust,
         )
 
 
@@ -380,6 +409,90 @@ def _generate_infographic_spec(prompt: str, sources: List[ResearchSource]) -> In
     )
 
 
+def _confidence_label(average_score: float) -> str:
+    if average_score >= 0.9:
+        return "Very high confidence"
+    if average_score >= 0.75:
+        return "High confidence"
+    if average_score >= 0.6:
+        return "Moderate confidence"
+    return "Cautious confidence"
+
+
+def _generate_provenance_records(
+    sources: List[ResearchSource],
+    trust_targets: Optional[List[str]],
+) -> List[ProvenanceRecord]:
+    now = datetime.utcnow()
+    source_ids = [source.id for source in sources]
+    summary_suffix = (
+        f" Priority signals: {', '.join(trust_targets)}."
+        if trust_targets
+        else ""
+    )
+    steps = [
+        (
+            "Source acquisition",
+            "Gathered initial source set aligned with the prompt.",
+            source_ids,
+        ),
+        (
+            "Article synthesis",
+            "Linked the most reliable claims to the narrative and citations.",
+            source_ids[:2] or source_ids,
+        ),
+        (
+            "Infographic generation",
+            "Mapped insights and citations into the infographic layout.",
+            source_ids[1:] or source_ids,
+        ),
+    ]
+    records: List[ProvenanceRecord] = []
+    for index, (phase, summary, ids) in enumerate(steps, start=1):
+        records.append(
+            ProvenanceRecord(
+                id=f"prov-{index}",
+                phase=phase,
+                summary=f"{summary}{summary_suffix}",
+                detail=(
+                    "Source metadata was validated for reliability signals."
+                    if phase == "Source acquisition"
+                    else None
+                ),
+                source_ids=ids or source_ids,
+                timestamp=now + timedelta(seconds=index * 3),
+            )
+        )
+    return records
+
+
+def _generate_trust_metadata(
+    article: ResearchArticle,
+    sources: List[ResearchSource],
+    trust_targets: Optional[List[str]],
+) -> TrustMetadata:
+    now = datetime.utcnow()
+    average_score = (
+        sum(source.reliability_score for source in sources) / len(sources)
+        if sources
+        else 0.0
+    )
+    rounded_average = max(0.0, min(round(average_score, 2), 1.0))
+    reliability_summary = (
+        f"Average reliability score across {len(sources)} sources: {average_score:.2f}."
+    )
+    if trust_targets:
+        reliability_summary += f" Highlighted signals: {', '.join(trust_targets)}."
+    return TrustMetadata(
+        confidence_level=_confidence_label(average_score),
+        confidence_note=article.confidence_note,
+        reliability_summary=reliability_summary,
+        average_reliability_score=rounded_average,
+        last_verified_at=now,
+        provenance=_generate_provenance_records(sources, trust_targets),
+    )
+
+
 def _generate_progress(start: datetime) -> List[ProgressStep]:
     stages = ["Queued", "Researching", "Writing", "Rendering", "Completed"]
     steps = []
@@ -490,6 +603,7 @@ def _build_shareable_package(job: ResearchJob) -> io.BytesIO:
     article_markdown = _build_article_markdown(job.article, job.sources)
     infographic_json = json.dumps(jsonable_encoder(job.infographic_spec), ensure_ascii=False, indent=2)
     sources_json = json.dumps(jsonable_encoder(job.sources), ensure_ascii=False, indent=2)
+    trust_json = json.dumps(jsonable_encoder(job.trust), ensure_ascii=False, indent=2)
     sources_csv = _build_sources_csv(job.sources)
 
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
@@ -497,6 +611,7 @@ def _build_shareable_package(job: ResearchJob) -> io.BytesIO:
         archive.writestr("infographic.json", infographic_json)
         archive.writestr("sources.json", sources_json)
         archive.writestr("sources.csv", sources_csv)
+        archive.writestr("trust.json", trust_json)
 
     buffer.seek(0)
     return buffer
@@ -505,6 +620,27 @@ def _build_shareable_package(job: ResearchJob) -> io.BytesIO:
 @app.get("/health")
 async def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
+
+
+def _build_placeholder_trust(source_id: str = "src-placeholder") -> TrustMetadata:
+    now = datetime.utcnow()
+    return TrustMetadata(
+        confidence_level="Medium confidence",
+        confidence_note="No jobs have shipped yet; trust metadata will populate once a research job runs.",
+        reliability_summary="Waiting for user submissions to generate live sources and citations.",
+        average_reliability_score=0.5,
+        last_verified_at=now,
+        provenance=[
+            ProvenanceRecord(
+                id="prov-placeholder",
+                phase="Placeholder",
+                summary="No research jobs have run yet.",
+                detail="Submit a prompt to see provenance from source acquisition, synthesis, and rendering.",
+                source_ids=[source_id],
+                timestamp=now,
+            )
+        ],
+    )
 
 
 @app.get("/research-summary", response_model=ResearchSummary)
@@ -530,6 +666,7 @@ async def research_summary() -> ResearchSummary:
         key_takeaways=["Infographics + articles + sources delivered as one job."],
         sources=[placeholder_source],
         confidence="Medium",
+        trust=_build_placeholder_trust(placeholder_source.id),
     )
 
 
@@ -538,7 +675,9 @@ async def create_research_job(payload: ResearchJobCreate) -> ResearchJob:
     if not payload.prompt.strip():
         raise HTTPException(status_code=422, detail="Prompt cannot be empty")
     settings = payload.settings or ResearchJobSettings()
-    job = JOB_STORE.create_job(payload.prompt.strip(), settings)
+    job = JOB_STORE.create_job(
+        payload.prompt.strip(), settings, trust_targets=payload.trust_targets
+    )
     return job
 
 
