@@ -1,6 +1,6 @@
 ---
 project_name: workspace
-updated_at: 2026-02-15T23:54:27.793564+00:00
+updated_at: 2026-02-15T23:58:35.665194+00:00
 status: in_progress
 ---
 
@@ -359,6 +359,7 @@ The plan store is the source of truth for planning and execution.
 - [x] Provide trustworthy, traceable outputs (citations, confidence, provenance).
 - [x] Make outputs easy to revisit, refine, and export.
 - [x] Activation:** ≥ 40% of signed-in users generate at least 1 research result.
+- [x] Run the program using docker-runner tool and check the logs to make sure all components are running OK.
 - [x] Run the program using docker-runner tool and check the logs to make sure all components are running OK.
 - [x] Run the program using docker-runner tool and check the logs to make sure all components are running OK.
 - [x] Run the program using docker-runner tool and check the logs to make sure all components are running OK.
