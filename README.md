@@ -16,7 +16,7 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-- Added structured article rendering pipeline that returns strongly typed sections, inline citations, confidence notes, implications, and a sourced explanatory narrative alongside each research job result.
+- Added backend endpoints for retrieving research sources and exporting citation metadata in JSON/CSV formats alongside structured article/infographic outputs.
 ## Getting Started
 
 ### Prerequisites
@@ -30,15 +30,14 @@ Build a full-stack web application where users sign in with Google, submit resea
 ```bash
 pip install -r backend/requirements.txt
 cd frontend && npm install
+./start.sh
 ```
 # Installation instructions will be added
 ```
 
 ### Usage
 
-```bash
-./start.sh  # Launch backend & frontend services
-```
+- Run `docker compose up --build` to launch the backend and frontend services (FastAPI on 8000, Next.js on 3000). - Use the frontend UI to submit prompts, view results, and export infographic/article/citations. - Use the backend `/research-sources` and `/research-sources/export` endpoints (JSON or CSV) to retrieve structured citation metadata. - Detailed source metadata (publish/access dates, snippet, reliability score) is available for every result to prevent fabricated citations.
 # Usage examples will be added
 ```
 
@@ -49,6 +48,8 @@ See `.leet/plans/` for the current development status.
 ## Testing
 
 ```bash
+pytest backend/tests
+```
 # Test instructions will be added
 ```
 
