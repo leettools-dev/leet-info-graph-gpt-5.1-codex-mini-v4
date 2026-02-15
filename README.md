@@ -16,8 +16,7 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-- Verified Docker-based setup by running `docker compose up` via the docker-runner tool and confirmed backend/frontend services start.
-
+- Running the application is documented in `start.sh`/`stop.sh` and supported by Docker Compose for backend and frontend services.
 ## Getting Started
 
 ### Prerequisites
@@ -38,8 +37,10 @@ cd frontend && npm install
 
 ### Usage
 
-- Use the “Download shareable package” button on the result page to retrieve a ZIP containing the article markdown, infographic spec, citation metadata (JSON/CSV), and trust metadata so you can share a complete, trusted bundle.
-- View the trust panel embedded on the result page to inspect confidence levels, reliability scores, and provenance records tied to each research job.
+```
+./start.sh   # stops existing services, launches backend + frontend, prints access URLs
+./stop.sh    # stops running services gracefully using stored PIDs
+```
 # Usage examples will be added
 ```
 
