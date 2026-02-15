@@ -1,0 +1,2 @@
+{"timestamp":"2026-02-15T18:21:53.566346Z","event":"task-initiated","message":"Task 'Product Requirements Document (PRD)' initiated","metadata":{"plan_file":"task-product-requirements-document-prd/plan.product-requirements-document-prd.md"}}
+{"timestamp":"2026-02-15T18:21:53.612535Z","event":"subtasks-synced","message":"Synced 8 subtasks from plan (created=8, archived=0)","metadata":{"subtask_count":8,"created_count":8,"archived_count":0}}
