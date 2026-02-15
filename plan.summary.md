@@ -1,6 +1,6 @@
 ---
 project_name: workspace
-updated_at: 2026-02-15T20:18:10.233811+00:00
+updated_at: 2026-02-15T20:51:37.340950+00:00
 status: in_progress
 ---
 
@@ -357,7 +357,7 @@ The plan store is the source of truth for planning and execution.
 - [x] supporting sources** (citations with links/metadata).
 - [x] Reduce the time to go from “question” → “shareable, cited infographic + article”.
 - [x] Provide trustworthy, traceable outputs (citations, confidence, provenance).
-- [ ] Make outputs easy to revisit, refine, and export.
+- [x] Make outputs easy to revisit, refine, and export.
 - [ ] Activation:** ≥ 40% of signed-in users generate at least 1 research result.
 
 ## Acceptance Criteria
