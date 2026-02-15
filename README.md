@@ -54,9 +54,13 @@ cd frontend && npm install
 
 ## Testing
 
-```bash
+### Testing
+
+Run tests from the root:
+
+```
 pytest backend/tests
-cd frontend && npm run build
+npm --prefix frontend test
 ```
 
 # Test instructions will be added
