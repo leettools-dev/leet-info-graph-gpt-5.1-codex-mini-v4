@@ -2,12 +2,12 @@ import csv
 import io
 import json
 import os
+import zipfile
 from datetime import datetime, timedelta
-from enum import Enum
-from typing import Iterator, List, Optional
+from typing import List, Optional
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi import FastAPI, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -251,7 +251,7 @@ def _generate_sources(prompt: str) -> List[ResearchSource]:
             id=f"src-{idx}",
             title=template["title"],
             publisher=template["publisher"],
-            url=HttpUrl(f"https://example.com/{topic.lower()}-insight-{idx}", scheme="https"),
+            url=HttpUrl(f"https://example.com/{topic.lower()}-insight-{idx}"),
             publish_date=publish_date,
             accessed_at=now,
             snippet=template["snippet"],
@@ -394,6 +394,114 @@ def _generate_progress(start: datetime) -> List[ProgressStep]:
     return steps
 
 
+def _format_citation_tags(citations: List[int]) -> str:
+    return " ".join(f"[{citation}]" for citation in citations) if citations else ""
+
+
+def _build_article_markdown(article: ResearchArticle, sources: List[ResearchSource]) -> str:
+    lines: List[str] = []
+    lines.append(f"# {article.title}")
+    lines.append("")
+    lines.append(f"**Confidence:** {article.confidence}")
+    lines.append("")
+    lines.append(article.overview)
+    lines.append("")
+
+    lines.append("## Key points")
+    for point in article.key_points:
+        citation_text = _format_citation_tags(point.citations)
+        lines.append(f"- {point.text} {citation_text}".strip())
+    lines.append("")
+
+    lines.append("## Detailed explanation")
+    lines.append(article.detailed_explanation)
+    lines.append(_format_citation_tags(article.sections[2].citations) if len(article.sections) > 2 else "")
+    lines.append("")
+
+    lines.append("## Implications / applications")
+    for implication in article.implications:
+        citation_text = _format_citation_tags(implication.citations)
+        lines.append(f"- {implication.text} {citation_text}".strip())
+    lines.append("")
+
+    lines.append("## Confidence / uncertainty notes")
+    lines.append(article.confidence_note)
+    lines.append("")
+
+    lines.append("## Limitations / uncertainties")
+    lines.append(article.limitations)
+    lines.append("")
+
+    lines.append("## Structured narrative")
+    for section in article.sections:
+        lines.append(f"### {section.heading}")
+        lines.append(section.body)
+        citations_text = _format_citation_tags(section.citations)
+        if citations_text:
+            lines.append(f"Citations: {citations_text}")
+        lines.append("")
+
+    lines.append("## Sources")
+    for source in sources:
+        publish_date = source.publish_date.isoformat() if source.publish_date else "Unknown"
+        lines.append(
+            f"- [{source.citation_index}] {source.title} ({source.publisher})"
+        )
+        lines.append(
+            f"  * URL: {source.url} | Published: {publish_date} | Accessed: {source.accessed_at.isoformat()} | Reliability: {source.reliability_score}"
+        )
+        lines.append(f"  * {source.snippet}")
+        lines.append("")
+
+    return "\n".join(line for line in lines if line is not None).strip()
+
+
+def _build_sources_csv(sources: List[ResearchSource]) -> str:
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "citation_index",
+        "id",
+        "title",
+        "publisher",
+        "url",
+        "publish_date",
+        "accessed_at",
+        "snippet",
+        "reliability_score",
+    ])
+    for source in sources:
+        writer.writerow([
+            source.citation_index,
+            source.id,
+            source.title,
+            source.publisher,
+            source.url,
+            source.publish_date.isoformat() if source.publish_date else "",
+            source.accessed_at.isoformat(),
+            source.snippet,
+            source.reliability_score,
+        ])
+    return output.getvalue()
+
+
+def _build_shareable_package(job: ResearchJob) -> io.BytesIO:
+    buffer = io.BytesIO()
+    article_markdown = _build_article_markdown(job.article, job.sources)
+    infographic_json = json.dumps(jsonable_encoder(job.infographic_spec), ensure_ascii=False, indent=2)
+    sources_json = json.dumps(jsonable_encoder(job.sources), ensure_ascii=False, indent=2)
+    sources_csv = _build_sources_csv(job.sources)
+
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("article.md", article_markdown)
+        archive.writestr("infographic.json", infographic_json)
+        archive.writestr("sources.json", sources_json)
+        archive.writestr("sources.csv", sources_csv)
+
+    buffer.seek(0)
+    return buffer
+
+
 @app.get("/health")
 async def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
@@ -410,7 +518,7 @@ async def research_summary() -> ResearchSummary:
         id="src-placeholder",
         title="Research Infographic Studio placeholder",
         publisher="Research Lab",
-        url=HttpUrl("https://example.com/research-summary", scheme="https"),
+        url=HttpUrl("https://example.com/research-summary"),
         publish_date=datetime.utcnow() - timedelta(days=10),
         accessed_at=datetime.utcnow(),
         snippet="A placeholder source reminding users about the Research Infographic Studio vision.",
@@ -445,3 +553,16 @@ async def get_research_job(job_id: str) -> ResearchJob:
         return JOB_STORE.get_job(job_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get("/research-jobs/{job_id}/package")
+async def download_shareable_package(job_id: str) -> StreamingResponse:
+    try:
+        job = JOB_STORE.get_job(job_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+    buffer = _build_shareable_package(job)
+    filename = f"research-{job.job_id}-package.zip"
+    headers = {"Content-Disposition": f"attachment; filename=\"{filename}\""}
+    return StreamingResponse(buffer, media_type="application/zip", headers=headers)

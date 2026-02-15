@@ -78,6 +78,8 @@ export default function HomePage() {
   const [summaries, setSummaries] = useState<ResearchJobSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [downloadingPackage, setDownloadingPackage] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/research-summary`)
@@ -112,6 +114,34 @@ export default function HomePage() {
       setError((err as Error).message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDownloadPackage() {
+    if (!job) {
+      return;
+    }
+    setDownloadingPackage(true);
+    setDownloadError(null);
+    try {
+      const response = await fetch(`${API_URL}/research-jobs/${job.job_id}/package`);
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || "Failed to download shareable package");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `research-${job.job_id}-package.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setDownloadError((err as Error).message);
+    } finally {
+      setDownloadingPackage(false);
     }
   }
 
@@ -244,7 +274,15 @@ export default function HomePage() {
             <button className="rounded-2xl border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white/80">
               Export article
             </button>
+            <button
+              className="rounded-2xl bg-emerald-500 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-emerald-400 disabled:bg-emerald-700"
+              onClick={handleDownloadPackage}
+              disabled={downloadingPackage}
+            >
+              {downloadingPackage ? "Preparing package…" : "Download shareable package"}
+            </button>
           </div>
+          {downloadError && <p className="text-xs text-red-400">{downloadError}</p>}
         </header>
         <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
           <div className="space-y-6">
