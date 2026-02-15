@@ -1,3 +1,5 @@
+import io
+import zipfile
 from datetime import datetime
 
 from httpx import AsyncClient
@@ -72,3 +74,28 @@ async def test_research_job_flow():
         detail_response = await client.get(f"/research-jobs/{job_id}")
     assert detail_response.status_code == 200
     assert detail_response.json()["job_id"] == job_id
+
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        package_response = await client.get(f"/research-jobs/{job_id}/package")
+    assert package_response.status_code == 200
+    assert package_response.headers["content-type"] == "application/zip"
+
+    buffer = io.BytesIO(package_response.content)
+    with zipfile.ZipFile(buffer) as archive:
+        names = archive.namelist()
+    assert "article.md" in names
+    assert "infographic.json" in names
+    assert "sources.json" in names
+    assert "sources.csv" in names
+
+    buffer.seek(0)
+    with zipfile.ZipFile(buffer) as archive:
+        with archive.open("article.md") as article_file:
+            article_text = article_file.read().decode("utf-8")
+    assert job_data["article"]["title"] in article_text
+
+    buffer.seek(0)
+    with zipfile.ZipFile(buffer) as archive:
+        with archive.open("sources.csv") as csv_file:
+            csv_content = csv_file.read().decode("utf-8")
+    assert "citation_index" in csv_content
