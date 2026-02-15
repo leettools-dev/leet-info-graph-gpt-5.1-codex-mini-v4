@@ -37,6 +37,30 @@ async def test_research_job_flow():
     assert job_data["prompt"].startswith("Future")
     assert job_data["infographic_spec"]["layout"] in ("timeline", "comparison")
     assert job_data["article"]["sections"]
+    article = job_data["article"]
+    sources = job_data["sources"]
+    citation_indexes = [source["citation_index"] for source in sources]
+    assert citation_indexes == sorted(citation_indexes)
+    assert citation_indexes == list(range(1, len(sources) + 1))
+    assert article["detailed_explanation"]
+    assert article["confidence_note"]
+    assert article["implications"]
+    expected_headings = {
+        "Overview",
+        "Key points",
+        "Detailed explanation",
+        "Implications / applications",
+        "Limitations / uncertainties",
+        "Sources",
+    }
+    headings = {section["heading"] for section in article["sections"]}
+    assert expected_headings.issubset(headings)
+    for section in article["sections"]:
+        for citation in section["citations"]:
+            assert citation in citation_indexes
+    for highlight in article["key_points"] + article["implications"]:
+        for citation in highlight["citations"]:
+            assert citation in citation_indexes
 
     async with AsyncClient(app=app, base_url="http://test") as client:
         list_response = await client.get("/research-jobs")
