@@ -1,34 +1,14 @@
-<<<<<<< HEAD
-=======
 version: '3.9'
->>>>>>> dev#feature#research-infographic-studio
+
 services:
   backend:
     build:
       context: ./backend
-<<<<<<< HEAD
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env.sample
-    command: uvicorn app.main:app --host 0.0.0.0 --port ${BACKEND_PORT:-8000}
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    env_file:
-      - .env.sample
-    command: npm run dev -- --hostname 0.0.0.0 --port ${FRONTEND_PORT:-3000}
-=======
     ports:
       - '${BACKEND_PORT:-8000}:8000'
     env_file:
       - .env
-    depends_on:
-      - frontend
+    command: uvicorn backend.app.main:app --host 0.0.0.0 --port ${BACKEND_PORT:-8000}
   frontend:
     build:
       context: ./frontend
@@ -36,4 +16,6 @@ services:
       - '${FRONTEND_PORT:-3000}:3000'
     env_file:
       - .env
->>>>>>> dev#feature#research-infographic-studio
+    depends_on:
+      - backend
+    command: npm run dev -- --hostname 0.0.0.0 --port ${FRONTEND_PORT:-3000}

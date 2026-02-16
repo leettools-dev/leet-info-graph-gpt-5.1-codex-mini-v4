@@ -134,6 +134,14 @@ async def test_research_job_flow():
         with archive.open("article.md") as article_file:
             article_text = article_file.read().decode("utf-8")
     assert job_data["article"]["title"] in article_text
+    assert "## Confidence / uncertainty notes" in article_text
+    assert job_data["article"]["confidence_note"] in article_text
+    assert "## Sources" in article_text
+    for source in sources:
+        citation_marker = f"- [{source['citation_index']}]"
+        assert citation_marker in article_text
+    for citation_index in citation_indexes:
+        assert f"[{citation_index}]" in article_text
 
     buffer.seek(0)
     with zipfile.ZipFile(buffer) as archive:
