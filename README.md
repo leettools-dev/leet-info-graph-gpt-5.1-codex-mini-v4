@@ -22,6 +22,12 @@ Focused on answering the “question → shareable, cited infographic + article�
 ## Features
 
 - Export buttons now hit dedicated PNG/Markdown endpoints so users can grab shareable assets straight from the frontend without downloading the entire package.
+- Trust and provenance metadata (confidence_level, average reliability, and timestamped provenance records) travels with every job so the same citation IDs that appear in the article and infographic appear inside `trust.json`, `sources.json`, and the UI before a result is shared.
+
+### Usage example
+
+1. Generate a research job through the UI or `POST /research-jobs` with your prompt.
+2. Download the resulting bundle with `curl -o research-package.zip http://localhost:8000/research-jobs/<job_id>/package` and open `trust.json` to confirm the confidence note, source IDs, and provenance phase summaries match the inline citations you rely on.
 ## Getting Started
 
 ### Prerequisites
