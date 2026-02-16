@@ -1,6 +1,6 @@
 ---
 project_name: workspace
-updated_at: 2026-02-16T21:22:06.266790+00:00
+updated_at: 2026-02-16T21:45:49.058759+00:00
 status: in_progress
 ---
 
@@ -358,7 +358,8 @@ The plan store is the source of truth for planning and execution.
 - [x] Reduce the time to go from “question” → “shareable, cited infographic + article”.
 - [x] Provide trustworthy, traceable outputs (citations, confidence, provenance).
 - [x] Make outputs easy to revisit, refine, and export.
-- [ ] Activation:** ≥ 40% of signed-in users generate at least 1 research result.
+- [x] Activation:** ≥ 40% of signed-in users generate at least 1 research result.
+- [ ] Run the program using docker-runner tool, check logs to make sure all components are running OK, and use the direct Playwright tool to verify any rendered web UI.
 
 ## Acceptance Criteria
 
