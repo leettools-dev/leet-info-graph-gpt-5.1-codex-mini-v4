@@ -1,9 +1,0 @@
-{
-  "state": "unhealthy",
-  "workspace_path": "/usr/local/leettools/repo/leet-info-graph-gpt-5.1-codex-mini-v4",
-  "message": "Services failed healthcheck: []\nContainer logs (last 50 lines):\nbackend-1  | INFO:     Started server process [1]\nbackend-1  | INFO:     Waiting for application startup.\nbackend-1  | INFO:     Application startup complete.\nbackend-1  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)\nfrontend-1  | \nfrontend-1  | > research-infographic-studio-frontend@0.1.0 dev\nfrontend-1  | > next dev --hostname 0.0.0.0 --port 3000\nfrontend-1  | \nfrontend-1  | - \u001b[32mready\u001b[39m started server on 0.0.0.0:3000, url: http://localhost:3000\nfrontend-1  | \u001b[35m\u001b[1mAttention\u001b[22m\u001b[39m: Next.js now collects completely anonymous telemetry regarding usage.\nfrontend-1  | This information is used to shape Next.js' roadmap and prioritize features.\nfrontend-1  | You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:\nfrontend-1  | \u001b[36mhttps://nextjs.org/telemetry\u001b[39m\nfrontend-1  | \nfrontend-1  | - \u001b[35mevent\u001b[39m compiled client and server successfully in 271 ms (20 modules)\n",
-  "last_change_detected": "2026-02-16T00:59:56.222300+00:00",
-  "timestamp": "2026-02-16T01:02:02.509556+00:00",
-  "services": [],
-  "log_file": "/usr/local/leettools/repo/leet-info-graph-gpt-5.1-codex-mini-v4/.leet/run/logs/build.log"
-}
