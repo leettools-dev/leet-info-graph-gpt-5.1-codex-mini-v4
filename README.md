@@ -16,7 +16,8 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-- Running the application is documented in `start.sh`/`stop.sh` and supported by Docker Compose for backend and frontend services.
+- Added Docker Compose orchestration for backend and frontend along with health checks.
+
 ## Getting Started
 
 ### Prerequisites
@@ -54,13 +55,7 @@ cd frontend && npm install
 
 ## Testing
 
-### Testing
-
-We typically run the entire docker-compose stack instead of individual test suites for each service to verify they start correctly together.
-
-- `docker compose up`: Starts backend (uvicorn) and frontend (npm run dev) services via Docker Compose.
-- Monitor `docker compose logs` or docker-runner logs to ensure both services log startup completion without errors.
-- Confirm the backend is reachable at `http://localhost:8000` and frontend at `http://localhost:3000` before considering the stack healthy.
+- Run `docker compose up` to start both services and `docker compose down` to stop them.
 
 # Test instructions will be added
 ```
