@@ -8,24 +8,22 @@ Research Infographic Studio is a full-stack research companion that transforms a
 
 ## Features
 
-<<<<<<< HEAD
 - Instant shareable package caching ensures exports download immediately after a job completes, reducing the time to go from question to shareable infographic + article.
-
-=======
 - Added in-product hero, prompt editor, and export instructions that describe how Research Infographic Studio turns a single prompt into a shareable infographic, article, and citation package.
->>>>>>> dev#feature#product-name-working-research-infographic-studio
+- Guided prompt composer with audience, tone, citation style, and counterpoint controls that turn questions into structured research jobs ready for AI processing.
+- Trusted research pipeline that combines curated sources, provenance tracking, and reliability scoring to keep citations accurate and traceable.
+- Article + infographic generation that produces a structured narrative alongside timeline, comparison, and callout visual blocks complete with citation markers.
+- Shareable history, versioning, and export bundles (PNG, Markdown, JSON, CSV) so every insight can be revisited, refined, or handed off for publication.
+- Activation insights surface the 40% activation target for signed-in users and guide teams toward generating more valuable research.
+
 ## Getting Started
 
 ### Prerequisites
 
-<<<<<<< HEAD
-- Environment variables (`.env.sample`) now include placeholders for `BACKEND_PORT`, `FRONTEND_PORT`, `NEXT_PUBLIC_API_URL`, and Google OAuth credentials (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) so authentication and networking can be configured without exposing secrets.
-=======
 - Python 3.12+ (backend FastAPI service)
 - Node 20+ (Next.js App Router frontend)
-- Docker & Docker Compose (end‑to‑end runs)
-- `.env` file (copy `.env.sample` and fill in placeholders for `BACKEND_PORT`, `FRONTEND_PORT`, `NEXT_PUBLIC_API_URL`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET`)
->>>>>>> dev#feature#product-name-working-research-infographic-studio
+- Docker & Docker Compose (end-to-end runs)
+- Environment variables (`.env.sample`) now include placeholders for `BACKEND_PORT`, `FRONTEND_PORT`, `NEXT_PUBLIC_API_URL`, and Google OAuth credentials (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) so authentication and networking can be configured without exposing secrets.
 
 ### Installation
 
@@ -43,15 +41,11 @@ cd frontend && npm install
 
 `start.sh` creates `logs/` for backend and frontend output and writes PID files to `pids/` so services can be reliably restarted. See `quick_start.md` for full environment, logging, and export guidance.
 
-<<<<<<< HEAD
+### Docker
+
 - Run `docker compose up` to boot the backend and frontend containers defined in `docker-compose.yml`.
 - Use `COMPOSE_PROJECT_NAME` or the default prefixes to keep container names consistent with your development environment.
 - Ensure `.env` provides `BACKEND_PORT`, `FRONTEND_PORT`, `NEXT_PUBLIC_API_URL`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` before starting the stack.
-
-### Docker 🐳
-=======
-### Docker
->>>>>>> dev#feature#product-name-working-research-infographic-studio
 
 ```bash
 docker compose up --build
