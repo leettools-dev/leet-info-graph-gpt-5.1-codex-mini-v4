@@ -122,11 +122,12 @@ async def test_research_job_flow():
 
     buffer = io.BytesIO(package_response.content)
     with zipfile.ZipFile(buffer) as archive:
-    assert "article.md" in names
-    assert "infographic.json" in names
-    assert "infographic.png" in names
-    assert "sources.json" in names
-    assert "sources.csv" in names
+        names = archive.namelist()
+        assert "article.md" in names
+        assert "infographic.json" in names
+        assert "infographic.png" in names
+        assert "sources.json" in names
+        assert "sources.csv" in names
 
     buffer.seek(0)
     with zipfile.ZipFile(buffer) as archive:

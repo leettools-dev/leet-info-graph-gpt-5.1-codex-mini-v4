@@ -386,10 +386,6 @@ class ResearchJob(BaseModel):
         False,
         description="Whether a shareable package was cached immediately after job completion.",
     )
-    shareable_package_ready: bool = Field(
-        False,
-        description="Whether a shareable package was cached immediately after job completion.",
-    )
 
 
 class ResearchJobSummary(BaseModel):
