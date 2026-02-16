@@ -42,6 +42,11 @@ Visit the frontend URL to see the Research Infographic Studio landing page and c
 | `docker compose up --build` | Alternative: run the full stack via Docker Compose. |
 | `docker compose down` | Tear down the containerized stack started by Docker Compose. |
 
+## Supporting Sources & Citations
+- Each research job returns ≥5 curated sources with publisher, trimmed summary, URL, publish/access dates, and reliability scores so you can verify claims before exporting.
+- Use the “Download shareable package” button (or `GET /research-jobs/{job_id}/package`) to retrieve a ZIP containing article Markdown, infographic JSON, PNG, and sources CSV/JSON for audits.
+- Inline citations (e.g., [1], [2]) link directly to the numbered sources in the detail view, making it easy to confirm metadata before sharing.
+
 ## Notes
 - Keep `.env` out of source control; use the `.env.sample` placeholders and update with real credentials in private copies.
 - `start.sh` relies on dependencies being installed (`pip install -r backend/requirements.txt` and `npm install` inside `frontend`). Run these once before invoking the script locally.
