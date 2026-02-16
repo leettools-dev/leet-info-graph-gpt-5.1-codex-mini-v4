@@ -21,7 +21,7 @@ Focused on answering the “question → shareable, cited infographic + article�
 
 ## Features
 
-- Documented how every research result ships with ≥5 curated sources, inline citations, and a CPI-ready export bundle that includes JSON/CSV metadata plus citation-linked article copy.
+- Export buttons now hit dedicated PNG/Markdown endpoints so users can grab shareable assets straight from the frontend without downloading the entire package.
 ## Getting Started
 
 ### Prerequisites

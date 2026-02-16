@@ -425,6 +425,8 @@ class JobStore:
     def __init__(self) -> None:
         self._jobs: List[ResearchJob] = []
         self._shareable_packages: Dict[str, bytes] = {}
+        self._infographic_assets: Dict[str, bytes] = {}
+        self._article_markdowns: Dict[str, bytes] = {}
 
     def list_jobs(self) -> List[ResearchJob]:
         return sorted(self._jobs, key=lambda job: job.created_at, reverse=True)
@@ -456,9 +458,23 @@ class JobStore:
     def cache_package(self, job_id: str, data: bytes) -> None:
         self._shareable_packages[job_id] = data
 
+    def cache_infographic(self, job_id: str, data: bytes) -> None:
+        self._infographic_assets[job_id] = data
+
+    def get_cached_infographic(self, job_id: str) -> Optional[bytes]:
+        return self._infographic_assets.get(job_id)
+
+    def cache_article_markdown(self, job_id: str, data: bytes) -> None:
+        self._article_markdowns[job_id] = data
+
+    def get_cached_article_markdown(self, job_id: str) -> Optional[bytes]:
+        return self._article_markdowns.get(job_id)
+
     def clear(self) -> None:
         self._jobs.clear()
         self._shareable_packages.clear()
+        self._infographic_assets.clear()
+        self._article_markdowns.clear()
 
     def create_job(
         self,
@@ -499,7 +515,15 @@ class JobStore:
             progress=progress,
             shareable_package_ready=True,
         )
-        package_bytes = _build_shareable_package(job)
+        article_markdown = _build_article_markdown(article, sources)
+        infographic_bytes = _render_infographic_image(spec)
+        self.cache_article_markdown(job.job_id, article_markdown.encode("utf-8"))
+        self.cache_infographic(job.job_id, infographic_bytes)
+        package_bytes = _build_shareable_package(
+            job,
+            infographic_bytes=infographic_bytes,
+            article_markdown=article_markdown,
+        )
         self.cache_package(job.job_id, package_bytes)
         self._jobs.append(job)
         USER_ACTIVITY.register_job(assigned_user_id)
@@ -930,13 +954,18 @@ def _build_sources_csv(sources: List[ResearchSource]) -> str:
     return output.getvalue()
 
 
-def _build_shareable_package(job: ResearchJob) -> bytes:
+def _build_shareable_package(
+    job: ResearchJob,
+    infographic_bytes: Optional[bytes] = None,
+    article_markdown: Optional[str] = None,
+) -> bytes:
     buffer = io.BytesIO()
-    article_markdown = _build_article_markdown(job.article, job.sources)
+    article_markdown = article_markdown or _build_article_markdown(job.article, job.sources)
     infographic_json = json.dumps(jsonable_encoder(job.infographic_spec), ensure_ascii=False, indent=2)
     sources_json = json.dumps(jsonable_encoder(job.sources), ensure_ascii=False, indent=2)
     trust_json = json.dumps(jsonable_encoder(job.trust), ensure_ascii=False, indent=2)
     sources_csv = _build_sources_csv(job.sources)
+    infographic_bytes = infographic_bytes or _render_infographic_image(job.infographic_spec)
 
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("article.md", article_markdown)
@@ -944,7 +973,7 @@ def _build_shareable_package(job: ResearchJob) -> bytes:
         archive.writestr("sources.json", sources_json)
         archive.writestr("sources.csv", sources_csv)
         archive.writestr("trust.json", trust_json)
-        archive.writestr("infographic.png", _render_infographic_image(job.infographic_spec))
+        archive.writestr("infographic.png", infographic_bytes)
 
     buffer.seek(0)
     return buffer.getvalue()
@@ -1145,9 +1174,66 @@ async def download_shareable_package(job_id: str) -> StreamingResponse:
         headers = {"Content-Disposition": f"attachment; filename=\"{filename}\""}
         return StreamingResponse(buffer, media_type="application/zip", headers=headers)
 
-    package_bytes = _build_shareable_package(job)
+    article_bytes = JOB_STORE.get_cached_article_markdown(job_id)
+    infographic_bytes = JOB_STORE.get_cached_infographic(job_id)
+
+    if not article_bytes:
+        article_markdown = _build_article_markdown(job.article, job.sources)
+        article_bytes = article_markdown.encode("utf-8")
+        JOB_STORE.cache_article_markdown(job.job_id, article_bytes)
+    else:
+        article_markdown = article_bytes.decode("utf-8")
+
+    if not infographic_bytes:
+        infographic_bytes = _render_infographic_image(job.infographic_spec)
+        JOB_STORE.cache_infographic(job.job_id, infographic_bytes)
+
+    package_bytes = _build_shareable_package(
+        job,
+        infographic_bytes=infographic_bytes,
+        article_markdown=article_markdown,
+    )
     JOB_STORE.cache_package(job_id, package_bytes)
     buffer = io.BytesIO(package_bytes)
     filename = f"research-{job.job_id}-package.zip"
     headers = {"Content-Disposition": f"attachment; filename=\"{filename}\""}
     return StreamingResponse(buffer, media_type="application/zip", headers=headers)
+
+
+@app.get("/research-jobs/{job_id}/infographic")
+async def download_infographic(job_id: str) -> StreamingResponse:
+    try:
+        job = JOB_STORE.get_job(job_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+    image_bytes = JOB_STORE.get_cached_infographic(job_id)
+    if not image_bytes:
+        image_bytes = _render_infographic_image(job.infographic_spec)
+        JOB_STORE.cache_infographic(job.job_id, image_bytes)
+
+    buffer = io.BytesIO(image_bytes)
+    filename = f"research-{job.job_id}-infographic.png"
+    headers = {"Content-Disposition": f"attachment; filename=\"{filename}\""}
+    return StreamingResponse(buffer, media_type="image/png", headers=headers)
+
+
+@app.get("/research-jobs/{job_id}/article")
+async def download_article_markdown(job_id: str) -> StreamingResponse:
+    try:
+        job = JOB_STORE.get_job(job_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+    markdown_bytes = JOB_STORE.get_cached_article_markdown(job_id)
+    if not markdown_bytes:
+        markdown = _build_article_markdown(job.article, job.sources)
+        markdown_bytes = markdown.encode("utf-8")
+        JOB_STORE.cache_article_markdown(job.job_id, markdown_bytes)
+    else:
+        markdown = markdown_bytes.decode("utf-8")
+
+    buffer = io.BytesIO(markdown_bytes)
+    filename = f"research-{job.job_id}-article.md"
+    headers = {"Content-Disposition": f"attachment; filename=\"{filename}\""}
+    return StreamingResponse(buffer, media_type="text/markdown", headers=headers)

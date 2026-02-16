@@ -46,6 +46,7 @@ Visit the frontend URL to see the Research Infographic Studio landing page and c
 ## Supporting Sources & Citations
 - Each research job returns ≥5 curated sources with publisher, trimmed summary, URL, publish/access dates, and reliability scores so you can verify claims before exporting.
 - Use the “Download shareable package” button (or `GET /research-jobs/{job_id}/package`) to retrieve a ZIP containing article Markdown, infographic JSON, PNG, and sources CSV/JSON for audits.
+- Call out the new quick-export endpoints (`/research-jobs/{job_id}/article` for Markdown, `/research-jobs/{job_id}/infographic` for PNG) when you need individual assets without waiting for the full bundle.
 - Inline citations (e.g., [1], [2]) link directly to the numbered sources in the detail view, making it easy to confirm metadata before sharing.
 
 ## Notes
