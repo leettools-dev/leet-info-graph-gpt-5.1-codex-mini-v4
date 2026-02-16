@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TrustPanel, type TrustMetadata } from "./components/trust-panel";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -125,6 +125,16 @@ type ProductInfo = {
   last_updated: string;
 };
 
+type ActivationMetrics = {
+  signed_in_users: number;
+  users_with_job: number;
+  jobs_total: number;
+  activation_rate: number;
+  activation_goal: number;
+  cta_message: string;
+  last_updated: string;
+};
+
 type ExportAsset = "infographic" | "article";
 type HistoryAction = "open" | "refine";
 
@@ -169,6 +179,30 @@ export default function HomePage() {
   const [refineTargetJobId, setRefineTargetJobId] = useState<string | null>(null);
   const [refining, setRefining] = useState(false);
   const [refineError, setRefineError] = useState<string | null>(null);
+  const [activationMetrics, setActivationMetrics] = useState<ActivationMetrics | null>(null);
+  const [activationLoading, setActivationLoading] = useState(true);
+  const [activationError, setActivationError] = useState<string | null>(null);
+  const [pretendUserId, setPretendUserId] = useState("researcher-001");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [signInLoading, setSignInLoading] = useState(false);
+  const [signInError, setSignInError] = useState<string | null>(null);
+
+  const loadActivationMetrics = useCallback(async () => {
+    setActivationLoading(true);
+    setActivationError(null);
+    try {
+      const response = await fetch(`${API_URL}/activation/metrics`);
+      if (!response.ok) {
+        throw new Error("Failed to load activation metrics");
+      }
+      const data = await response.json();
+      setActivationMetrics(data);
+    } catch (error) {
+      setActivationError((error as Error).message);
+    } finally {
+      setActivationLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetch(`${API_URL}/product-info`)
@@ -178,11 +212,26 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const stored = window.localStorage.getItem("researcher_id");
+    if (stored) {
+      setUserId(stored);
+      setPretendUserId(stored);
+    }
+  }, []);
+
+  useEffect(() => {
     fetch(`${API_URL}/research-jobs`)
       .then((res) => res.json())
       .then((data) => setSummaries(data))
       .catch((err) => console.error(err));
   }, [job]);
+
+  useEffect(() => {
+    loadActivationMetrics();
+  }, [loadActivationMetrics, job]);
 
   const historyContent = useMemo(() => {
     if (!summaries.length) {
@@ -385,6 +434,138 @@ export default function HomePage() {
           </button>
         </div>
         {refineError && <p className="text-xs text-red-400">{refineError}</p>}
+      </section>
+    );
+  };
+
+  const handleSignIn = async () => {
+    const trimmedId = pretendUserId.trim();
+    if (!trimmedId) {
+      setSignInError("Enter a researcher id to keep activation metrics clear.");
+      return;
+    }
+    setSignInLoading(true);
+    setSignInError(null);
+    try {
+      const response = await fetch(`${API_URL}/activation/sign-in`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: trimmedId }),
+      });
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || "Failed to register sign-in");
+      }
+      setUserId(trimmedId);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("researcher_id", trimmedId);
+      }
+      await loadActivationMetrics();
+    } catch (err) {
+      setSignInError((err as Error).message);
+    } finally {
+      setSignInLoading(false);
+    }
+  };
+
+  const handleSignOut = () => {
+    setUserId(null);
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("researcher_id");
+    }
+  };
+
+  const renderActivationPanel = () => {
+    const signedInCount = activationMetrics?.signed_in_users ?? 0;
+    const usersWithJob = activationMetrics?.users_with_job ?? 0;
+    const jobsTotal = activationMetrics?.jobs_total ?? 0;
+    const activationRate = activationMetrics ? `${activationMetrics.activation_rate}%` : "--";
+    const lastUpdated = activationMetrics?.last_updated
+      ? new Date(activationMetrics.last_updated).toLocaleString()
+      : null;
+    return (
+      <section className="w-full rounded-3xl border border-emerald-500/40 bg-slate-950/70 p-6 space-y-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Activation dashboard</p>
+            <div className="flex flex-wrap items-baseline gap-2">
+              <h3 className="text-3xl font-semibold text-white">
+                {activationLoading ? "Loading activation…" : `${activationRate}`}
+              </h3>
+              {activationMetrics && (
+                <p className="text-xs uppercase tracking-[0.4em] text-slate-400">
+                  Goal {activationMetrics.activation_goal}%
+                </p>
+              )}
+            </div>
+            <p className="text-sm text-slate-400">
+              {activationMetrics
+                ? `${usersWithJob} of ${signedInCount} signed-in researchers generated at least one research result.`
+                : "Activation metrics warm up when sign-in events are recorded."}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 text-center text-xs text-slate-300">
+            {[{ label: "Signed-in", value: signedInCount }, { label: "With jobs", value: usersWithJob }, { label: "Jobs", value: jobsTotal }].map((stat) => (
+              <div
+                key={stat.label}
+                className="flex flex-col gap-1 rounded-2xl bg-slate-900/50 px-3 py-2"
+              >
+                <p className="text-[0.65rem] uppercase tracking-[0.4em] text-slate-500">{stat.label}</p>
+                <p className="text-lg font-semibold text-white">{stat.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        {lastUpdated && <p className="text-[0.65rem] text-slate-500">Last refreshed {lastUpdated}</p>}
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-xs text-slate-400">
+            <span className="uppercase tracking-[0.4em] text-slate-500">Researcher ID</span>
+            <input
+              className="rounded-2xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              value={pretendUserId}
+              onChange={(event) => setPretendUserId(event.target.value)}
+            />
+          </label>
+          <div className="flex flex-col justify-between gap-2">
+            {userId ? (
+              <div className="space-y-2 text-xs text-slate-200">
+                <p>
+                  Signed in as <span className="text-emerald-300">{userId}</span>
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    className="rounded-2xl border border-white/20 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:border-white"
+                    onClick={handleSignOut}
+                  >
+                    Sign out
+                  </button>
+                  <button
+                    className="rounded-2xl bg-slate-800 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white"
+                    onClick={() => setPretendUserId("researcher-001")}
+                  >
+                    Switch id
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-[0.65rem] uppercase tracking-[0.4em] text-slate-500">Sign in with Google</p>
+                <button
+                  className="w-full rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition disabled:from-blue-700 disabled:to-cyan-700"
+                  onClick={handleSignIn}
+                  disabled={signInLoading}
+                >
+                  {signInLoading ? "Signing in…" : "Simulate Google sign-in"}
+                </button>
+                {signInError && <p className="text-xs text-red-400">{signInError}</p>}
+              </div>
+            )}
+          </div>
+        </div>
+        {activationMetrics && (
+          <p className="text-sm text-emerald-200">{activationMetrics.cta_message}</p>
+        )}
+        {activationError && <p className="text-xs text-red-400">{activationError}</p>}
       </section>
     );
   };
