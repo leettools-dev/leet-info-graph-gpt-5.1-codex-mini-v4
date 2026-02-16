@@ -6,6 +6,19 @@
 
 Research Infographic Studio is a full-stack research companion that transforms a single prompt into an AI-generated infographic, a structured explanatory article, and a traceable citation bundle. Users sign in with Google, submit prompts, and receive a fully cited result package plus a searchable history that can be refined, revisited, and exported in PNG, Markdown, JSON, or CSV formats.
 
+## Product Identity
+
+**Product name (working):** Research Infographic Studio
+
+Focused on answering the “question → shareable, cited infographic + article” cycle, the Research Infographic Studio name anchors every customer story, metric, and export bundle. The product information endpoint (`/product-info`) keeps the frontend, documentation, and activation dashboards in sync with the latest vision, goals, and architecture narrative so the name stays meaningful across releases and campaigns.
+
+### Success metrics snapshot
+
+- **Activation:** ≥ 40% of signed-in users generate at least one research result (tracked via `/activation/metrics`).
+- **Time-to-first-result:** Median ≤ 90 seconds for a standard prompt so that the name reflects instant insight.
+- **Export rate:** ≥ 20% of completed results exported once, reinforcing the promise of shareable outputs.
+- **Citation coverage:** ≥ 90% of factual claims tied to sources so the name stays synonymous with trustworthy storytelling.
+
 ## Features
 
 - Guided prompt composer with audience, tone, citation style, and counterpoint controls that turn questions into structured research jobs ready for AI processing.
@@ -22,6 +35,10 @@ Research Infographic Studio is a full-stack research companion that transforms a
 - Node 20+ (Next.js App Router frontend)
 - Docker & Docker Compose (end-to-end runs)
 - `.env` file (copy `.env.sample` and fill in placeholders for `BACKEND_PORT`, `FRONTEND_PORT`, `NEXT_PUBLIC_API_URL`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET`)
+
+### Getting Started
+
+- Clone the repo and copy `.env.sample` to `.env`, filling in backend/frontend ports (default 8000/3000), `NEXT_PUBLIC_API_URL`, and Google OAuth placeholders before running services.
 
 ### Installation
 
