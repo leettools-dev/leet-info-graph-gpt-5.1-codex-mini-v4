@@ -616,6 +616,11 @@ def _generate_article(prompt: str, sources: List[ResearchSource], settings: Rese
             citations=source_indices[1:3],
         ),
         ArticleSection(
+            heading="Confidence / uncertainty notes",
+            body=confidence_note,
+            citations=[sources[0].citation_index],
+        ),
+        ArticleSection(
             heading="Limitations / uncertainties",
             body=limitations,
             citations=[sources[2].citation_index],

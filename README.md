@@ -17,6 +17,7 @@ Build a full-stack web application where users sign in with Google, submit resea
 ## Features
 
 - Documented the Research Infographic Studio product narrative, goals, journeys, architecture, and trust pillars via a new backend `/product-info` endpoint and refreshed landing content.
+- Added the explanatory article experience with structured sections (overview, key points, detailed explanation, implications/applications, limitations, sources), inline citations connected to the source list, and confidence/uncertainty notes so narrative outputs remain traceable alongside the infographics.
 
 ## Getting Started
 
