@@ -3,3 +3,4 @@
 {"timestamp":"2026-02-16T00:23:12.541070Z","event":"progress-update","message":"Still waiting for docker-runner to produce logs; request running but no output captured yet.","metadata":{"source":"leet_task_progress_update"}}
 {"timestamp":"2026-02-16T00:23:26.753227Z","event":"progress-update","message":"Long-running request still active; docker-runner hasn't produced stdout/stderr yet. Will continue monitoring.","metadata":{"source":"leet_task_progress_update"}}
 {"timestamp":"2026-02-16T00:23:41.927273Z","event":"progress-update","message":"Docker compose building frontend/base images; logs showing build steps but still running. Will wait for completion.","metadata":{"source":"leet_task_progress_update"}}
+{"timestamp":"2026-02-16T00:30:06.689734Z","event":"task-done","message":"Subtask completed: Run the program using docker-runner tool and check the logs to make sure all components are running OK.","metadata":{"source":"leet_task_complete"}}
