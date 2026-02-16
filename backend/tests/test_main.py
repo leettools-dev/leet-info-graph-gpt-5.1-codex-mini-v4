@@ -157,6 +157,27 @@ async def test_research_job_flow():
 
     buffer.seek(0)
     with zipfile.ZipFile(buffer) as archive:
+        with archive.open("sources.json") as sources_file:
+            sources_json = json.load(sources_file)
+    assert isinstance(sources_json, list)
+    assert len(sources_json) == len(sources)
+    source_lookup = {source["citation_index"]: source for source in sources}
+    for entry in sources_json:
+        assert entry["citation_index"] in source_lookup
+        reference = source_lookup[entry["citation_index"]]
+        assert entry["title"] == reference["title"]
+        assert entry["publisher"] == reference["publisher"]
+        assert entry["url"] == reference["url"]
+        assert entry["snippet"] == reference["snippet"]
+        assert entry["publish_date"] == reference["publish_date"]
+        assert entry["accessed_at"] == reference["accessed_at"]
+        assert entry["reliability_score"] == reference["reliability_score"]
+        assert entry["publish_date"]
+        assert entry["accessed_at"]
+        assert 0.0 <= entry["reliability_score"] <= 1.0
+
+    buffer.seek(0)
+    with zipfile.ZipFile(buffer) as archive:
         with archive.open("article.md") as article_file:
             article_with_cached = article_file.read().decode("utf-8")
     assert job_data["article"]["title"] in article_with_cached

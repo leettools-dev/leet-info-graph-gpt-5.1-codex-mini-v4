@@ -21,8 +21,7 @@ Focused on answering the “question → shareable, cited infographic + article�
 
 ## Features
 
-- Documented the explanatory article experience with structured sections, inline citations that link to the sources list, and confidence/uncertainty notes so users understand how to review trust metadata before sharing.
-
+- Documented how every research result ships with ≥5 curated sources, inline citations, and a CPI-ready export bundle that includes JSON/CSV metadata plus citation-linked article copy.
 ## Getting Started
 
 ### Prerequisites
