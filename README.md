@@ -22,6 +22,7 @@ Build a full-stack web application where users sign in with Google, submit resea
 - Introduced a shareable package download button that fetches `/research-jobs/{job_id}/package`, generating a zip bundle with article markdown, infographic spec, citation metadata, and trust metadata to reduce the steps required for sharing results.
 - Added trust metadata (confidence levels, reliability summary, provenance records) to the job outputs so clients can explain citation confidence and trace the research pipeline.
 - Added frontend trust callouts that highlight confidence, citation reliability, and provenance context to help users assess the credibility of each result.
+- Updated README to highlight the trust panel, provenance records, and source access metadata so users can verify citation integrity before sharing.
 
 ## Getting Started
 

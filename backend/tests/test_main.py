@@ -102,3 +102,11 @@ async def test_research_job_flow():
         with archive.open("sources.csv") as csv_file:
             csv_content = csv_file.read().decode("utf-8")
     assert "citation_index" in csv_content
+
+    buffer.seek(0)
+    with zipfile.ZipFile(buffer) as archive:
+        with archive.open("trust.json") as trust_file:
+            trust_json = json.loads(trust_file.read().decode("utf-8"))
+    assert trust_json["confidence_level"]
+    assert trust_json["reliability_summary"]
+    assert trust_json["provenance"]

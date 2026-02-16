@@ -243,6 +243,13 @@ export default function HomePage() {
   }
 
   const sortedSources = [...job.sources].sort((a, b) => a.citation_index - b.citation_index);
+  const lastAccessedTimestamp = sortedSources.reduce(
+    (latest, source) => Math.max(latest, new Date(source.accessed_at).getTime()),
+    0,
+  );
+  const formattedLastAccessed = lastAccessedTimestamp
+    ? new Date(lastAccessedTimestamp).toLocaleString()
+    : null;
 
   const renderCitations = (citations: number[]) => {
     if (!citations.length) {
@@ -354,7 +361,14 @@ export default function HomePage() {
           </div>
           <aside className="space-y-4">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-4 space-y-3">
-              <h3 className="text-xs uppercase tracking-[0.4em] text-slate-400">Sources</h3>
+              <div className="flex items-start justify-between">
+                <h3 className="text-xs uppercase tracking-[0.4em] text-slate-400">Sources</h3>
+                {formattedLastAccessed && (
+                  <p className="text-[0.6rem] text-slate-400">
+                    Sources last accessed on {formattedLastAccessed}
+                  </p>
+                )}
+              </div>
               <div className="space-y-3">
                 {sortedSources.map((source) => (
                   <div
@@ -377,6 +391,7 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
+            <TrustPanel trust={job.trust} />
             <div className="rounded-3xl border border-white/10 bg-white/5 p-4 space-y-3">
               <div className="flex items-center justify-between text-xs text-slate-400">
                 <p>Job progress</p>
