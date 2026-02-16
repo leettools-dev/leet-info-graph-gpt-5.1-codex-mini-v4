@@ -16,7 +16,7 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-- Added Docker Compose orchestration for backend and frontend along with health checks.
+- Implemented basic skeleton for Research Infographic Studio MVP including authentication, prompt submission, and placeholder result display.
 
 ## Getting Started
 
