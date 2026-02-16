@@ -5,7 +5,7 @@ import os
 import textwrap
 import zipfile
 from datetime import datetime, timedelta
-from typing import List, Optional, Set
+from typing import Dict, List, Optional, Set
 from uuid import uuid4
 from enum import Enum
 from math import ceil
@@ -382,6 +382,14 @@ class ResearchJob(BaseModel):
     sources: List[ResearchSource]
     trust: TrustMetadata
     progress: List[ProgressStep]
+    shareable_package_ready: bool = Field(
+        False,
+        description="Whether a shareable package was cached immediately after job completion.",
+    )
+    shareable_package_ready: bool = Field(
+        False,
+        description="Whether a shareable package was cached immediately after job completion.",
+    )
 
 
 class ResearchJobSummary(BaseModel):
@@ -420,6 +428,7 @@ class ResearchSummary(BaseModel):
 class JobStore:
     def __init__(self) -> None:
         self._jobs: List[ResearchJob] = []
+        self._shareable_packages: Dict[str, bytes] = {}
 
     def list_jobs(self) -> List[ResearchJob]:
         return sorted(self._jobs, key=lambda job: job.created_at, reverse=True)
@@ -445,8 +454,15 @@ class JobStore:
                 return job
         raise KeyError(f"Job {job_id} not found")
 
+    def get_cached_package(self, job_id: str) -> Optional[bytes]:
+        return self._shareable_packages.get(job_id)
+
+    def cache_package(self, job_id: str, data: bytes) -> None:
+        self._shareable_packages[job_id] = data
+
     def clear(self) -> None:
         self._jobs.clear()
+        self._shareable_packages.clear()
 
     def create_job(
         self,
@@ -485,7 +501,10 @@ class JobStore:
             sources=sources,
             trust=trust_metadata,
             progress=progress,
+            shareable_package_ready=True,
         )
+        package_bytes = _build_shareable_package(job)
+        self.cache_package(job.job_id, package_bytes)
         self._jobs.append(job)
         USER_ACTIVITY.register_job(assigned_user_id)
         return job
@@ -915,7 +934,7 @@ def _build_sources_csv(sources: List[ResearchSource]) -> str:
     return output.getvalue()
 
 
-def _build_shareable_package(job: ResearchJob) -> io.BytesIO:
+def _build_shareable_package(job: ResearchJob) -> bytes:
     buffer = io.BytesIO()
     article_markdown = _build_article_markdown(job.article, job.sources)
     infographic_json = json.dumps(jsonable_encoder(job.infographic_spec), ensure_ascii=False, indent=2)
@@ -932,7 +951,7 @@ def _build_shareable_package(job: ResearchJob) -> io.BytesIO:
         archive.writestr("infographic.png", _render_infographic_image(job.infographic_spec))
 
     buffer.seek(0)
-    return buffer
+    return buffer.getvalue()
 
 
 
@@ -1123,7 +1142,16 @@ async def download_shareable_package(job_id: str) -> StreamingResponse:
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 
-    buffer = _build_shareable_package(job)
+    cached = JOB_STORE.get_cached_package(job_id)
+    if cached:
+        buffer = io.BytesIO(cached)
+        filename = f"research-{job.job_id}-package.zip"
+        headers = {"Content-Disposition": f"attachment; filename=\"{filename}\""}
+        return StreamingResponse(buffer, media_type="application/zip", headers=headers)
+
+    package_bytes = _build_shareable_package(job)
+    JOB_STORE.cache_package(job_id, package_bytes)
+    buffer = io.BytesIO(package_bytes)
     filename = f"research-{job.job_id}-package.zip"
     headers = {"Content-Disposition": f"attachment; filename=\"{filename}\""}
     return StreamingResponse(buffer, media_type="application/zip", headers=headers)

@@ -108,9 +108,15 @@ async def test_research_job_flow():
     assert package_response.status_code == 200
     assert package_response.headers["content-type"] == "application/zip"
 
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        cached_response = await client.get(f"/research-jobs/{job_id}/package")
+    assert cached_response.status_code == 200
+    assert cached_response.headers["content-type"] == "application/zip"
+
+    assert package_response.content == cached_response.content
+
     buffer = io.BytesIO(package_response.content)
     with zipfile.ZipFile(buffer) as archive:
-        names = archive.namelist()
     assert "article.md" in names
     assert "infographic.json" in names
     assert "infographic.png" in names
@@ -134,3 +140,9 @@ async def test_research_job_flow():
         with archive.open("sources.csv") as csv_file:
             csv_content = csv_file.read().decode("utf-8")
     assert "citation_index" in csv_content
+
+    buffer.seek(0)
+    with zipfile.ZipFile(buffer) as archive:
+        with archive.open("article.md") as article_file:
+            article_with_cached = article_file.read().decode("utf-8")
+    assert job_data["article"]["title"] in article_with_cached

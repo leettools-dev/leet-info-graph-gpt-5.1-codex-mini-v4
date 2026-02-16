@@ -11,6 +11,7 @@
 | --- | --- |
 | `BACKEND_PORT` | Port exposed by the FastAPI service (default `8000`). |
 | `FRONTEND_PORT` | Port exposed by the Next.js frontend (default `3000`). |
+| `NEXT_PUBLIC_API_URL` | API URL configured for the frontend to reach the backend (e.g., `http://localhost:8000`). |
 | `GOOGLE_CLIENT_ID` | OAuth client id placeholder for future Google sign-in integration. |
 | `GOOGLE_CLIENT_SECRET` | OAuth client secret placeholder. |
 
