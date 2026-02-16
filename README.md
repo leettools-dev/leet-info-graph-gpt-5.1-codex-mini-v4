@@ -21,6 +21,7 @@ Focused on answering the “question → shareable, cited infographic + article�
 
 ## Features
 
+- History & refine refinements now live in the UI so everyone can revisit past jobs, open their detail views, and click “Refine” to evolve prompts, audiences, tones, citation styles, and counterpoint preferences before generating a new version.
 - Export buttons now hit dedicated PNG/Markdown endpoints so users can grab shareable assets straight from the frontend without downloading the entire package.
 - Trust and provenance metadata (confidence_level, average reliability, and timestamped provenance records) travels with every job so the same citation IDs that appear in the article and infographic appear inside `trust.json`, `sources.json`, and the UI before a result is shared.
 

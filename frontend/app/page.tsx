@@ -73,6 +73,8 @@ type ResearchJobSettings = {
   include_counterpoints?: boolean;
 };
 
+type RefineTextSettingKey = Exclude<keyof ResearchJobSettings, "include_counterpoints">;
+
 type ResearchJob = {
   job_id: string;
   prompt: string;
@@ -164,6 +166,7 @@ export default function HomePage() {
   const [refineMode, setRefineMode] = useState(false);
   const [refinePrompt, setRefinePrompt] = useState(initialPrompt);
   const [refineSettings, setRefineSettings] = useState<ResearchJobSettings>({});
+  const [refineTargetJobId, setRefineTargetJobId] = useState<string | null>(null);
   const [refining, setRefining] = useState(false);
   const [refineError, setRefineError] = useState<string | null>(null);
 
@@ -215,6 +218,177 @@ export default function HomePage() {
     ));
   }, [summaries]);
 
+  const refineTextSettings = [
+    { label: "Audience", key: "audience" },
+    { label: "Tone", key: "tone" },
+    { label: "Length", key: "length" },
+    { label: "Citation style", key: "citation_style" },
+    { label: "Time range", key: "time_range" },
+    { label: "Region", key: "region" },
+  ];
+
+  const startRefineMode = (target: ResearchJob) => {
+    setRefinePrompt(target.prompt);
+    setJob(target);
+    setRefineSettings(target.settings ?? {});
+    setRefineTargetJobId(target.job_id);
+    setRefineMode(true);
+    setRefineError(null);
+  };
+
+  const openRefinePanel = () => {
+    setRefinePrompt(initialPrompt);
+    setRefineSettings({});
+    setRefineTargetJobId(null);
+    setRefineMode(true);
+    setRefineError(null);
+  };
+
+  const handleRefineSettingChange = (key: RefineTextSettingKey, value: string) => {
+    setRefineSettings((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleToggleCounterpoints = () => {
+    setRefineSettings((prev) => ({
+      ...prev,
+      include_counterpoints: !prev.include_counterpoints,
+    }));
+  };
+
+  const handleRefineCancel = () => {
+    setRefineMode(false);
+    setRefineTargetJobId(null);
+    setRefineError(null);
+  };
+
+  async function handleRefineSubmit() {
+    if (!refineTargetJobId) {
+      setRefineError("Select a job to refine.");
+      return;
+    }
+    const trimmedPrompt = refinePrompt.trim();
+    if (!trimmedPrompt) {
+      setRefineError("Prompt cannot be empty.");
+      return;
+    }
+    setRefining(true);
+    setRefineError(null);
+    try {
+      const sanitizedSettings = (
+        Object.entries(refineSettings) as [RefineTextSettingKey, ResearchJobSettings[RefineTextSettingKey]][]
+      ).reduce<Partial<ResearchJobSettings>>((acc, [key, value]) => {
+        if (value === undefined || value === null) {
+          return acc;
+        }
+        if (typeof value === "string") {
+          const trimmed = value.trim();
+          if (!trimmed) {
+            return acc;
+          }
+          acc[key] = trimmed as ResearchJobSettings[RefineTextSettingKey];
+          return acc;
+        }
+        acc[key] = value as ResearchJobSettings[RefineTextSettingKey];
+        return acc;
+      }, {});
+      const payload: { prompt: string; settings?: Partial<ResearchJobSettings> } = { prompt: trimmedPrompt };
+      if (Object.keys(sanitizedSettings).length) {
+        payload.settings = sanitizedSettings;
+      }
+      const response = await fetch(
+        `${API_URL}/research-jobs/${refineTargetJobId}/refine`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || "Failed to refine research job");
+      }
+      const data = await response.json();
+      setJob(data);
+      setRefineMode(false);
+      setRefineTargetJobId(null);
+      setRefineSettings({});
+    } catch (err) {
+      setRefineError((err as Error).message);
+    } finally {
+      setRefining(false);
+    }
+  }
+
+  const renderRefinePanel = () => {
+    if (!refineMode) {
+      return null;
+    }
+    const targetSummary = summaries.find((entry) => entry.job_id === refineTargetJobId);
+    const versionLabel = targetSummary ? `Version ${targetSummary.version}` : job ? `Version ${job.version}` : "Refine job";
+    const targetLabel = refineTargetJobId ? `Job ${refineTargetJobId}` : "Select a history entry";
+    return (
+      <section className="rounded-3xl border border-emerald-400/40 bg-slate-950/80 p-6 space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Refine research job</p>
+            <p className="text-sm text-white">
+              {targetLabel} · {versionLabel}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="text-xs uppercase tracking-wide text-slate-400 underline"
+            onClick={handleRefineCancel}
+          >
+            Cancel
+          </button>
+        </div>
+        <textarea
+          className="w-full rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white"
+          rows={4}
+          value={refinePrompt}
+          onChange={(event) => setRefinePrompt(event.target.value)}
+        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          {refineTextSettings.map((setting) => (
+            <label key={setting.key} className="flex flex-col gap-1 text-xs text-slate-300">
+              <span>{setting.label}</span>
+              <input
+                type="text"
+                value={refineSettings[setting.key] ?? ""}
+                onChange={(event) => handleRefineSettingChange(setting.key, event.target.value)}
+                className="rounded-2xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              />
+            </label>
+          ))}
+        </div>
+        <label className="flex items-center gap-2 text-xs text-slate-300">
+          <input
+            type="checkbox"
+            checked={Boolean(refineSettings.include_counterpoints)}
+            onChange={handleToggleCounterpoints}
+            className="h-4 w-4 rounded border-slate-800 bg-slate-900 text-emerald-400 focus:ring-emerald-400"
+          />
+          Include counterpoints
+        </label>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            className="rounded-2xl bg-emerald-500 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-emerald-400 disabled:bg-emerald-700"
+            onClick={handleRefineSubmit}
+            disabled={refining || !refineTargetJobId || !refinePrompt.trim()}
+          >
+            {refining ? "Refining…" : "Submit refine"}
+          </button>
+        </div>
+        {refineError && <p className="text-xs text-red-400">{refineError}</p>}
+      </section>
+    );
+  };
+
   async function handleGenerate() {
     setLoading(true);
     setError(null);
@@ -249,9 +423,7 @@ export default function HomePage() {
       if (action === "open") {
         setJob(data);
       } else {
-        setRefinePrompt(data.prompt);
-        setJob(data);
-        setRefineMode(true);
+        startRefineMode(data);
       }
     } catch (err) {
       setHistoryLoadError((err as Error).message);
@@ -426,7 +598,7 @@ export default function HomePage() {
               </button>
               <button
                 className="rounded-2xl border border-white/30 px-5 py-2 text-xs uppercase tracking-wide text-white/70"
-                onClick={() => setRefineMode(true)}
+                onClick={openRefinePanel}
               >
                 Refine previous job
               </button>
