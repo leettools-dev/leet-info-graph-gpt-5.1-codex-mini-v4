@@ -1,9 +1,9 @@
 {
   "state": "build_failed",
   "workspace_path": "/usr/local/leettools/repo/leet-info-graph-gpt-5.1-codex-mini-v4",
-  "message": "docker compose up failed (exit 1)\nstderr:\nyaml: line 3: mapping values are not allowed in this context\n",
-  "last_change_detected": "2026-02-16T17:40:22.588162+00:00",
-  "timestamp": "2026-02-16T17:40:22.803943+00:00",
+  "message": "docker compose up failed with exit code 1",
+  "last_change_detected": "",
+  "timestamp": "2026-02-16T18:08:53.664215+00:00",
   "services": [],
-  "log_file": "/usr/local/leettools/repo/leet-info-graph-gpt-5.1-codex-mini-v4/.leet/run/logs/build.log"
+  "log_file": "/usr/local/leettools/repo/leet-info-graph-gpt-5.1-codex-mini-v4/.leet/outbound_requests/docker-runner/request-1771261778383/stderr.log"
 }
