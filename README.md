@@ -16,15 +16,14 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-- Implemented basic skeleton for Research Infographic Studio MVP including authentication, prompt submission, and placeholder result display.
+- Documented the Research Infographic Studio product narrative, goals, journeys, architecture, and trust pillars via a new backend `/product-info` endpoint and refreshed landing content.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Python 3.12+ (backend) and Node 20+ (frontend).
-- Docker & Docker Compose for full-stack runs.
-- Copy `.env.sample` to `.env` and define the placeholders: `BACKEND_PORT`, `FRONTEND_PORT`, `NEXT_PUBLIC_API_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+- Environment variables (`.env.sample`) now include settings for product storytelling such as `NEXT_PUBLIC_API_URL`, `BACKEND_PORT`, `FRONTEND_PORT`, and Google OAuth placeholders required for future Google Sign-In integration.
+
 ### Installation
 
 ```bash

@@ -30,6 +30,19 @@ async def test_research_summary_placeholder():
 
 
 @mark.asyncio
+async def test_product_info_endpoint():
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        response = await client.get("/product-info")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "Research Infographic Studio"
+    assert data["tagline"]
+    assert len(data["features"]) >= 3
+    assert data["success_metrics"]
+    assert data["system_architecture"]
+
+
+@mark.asyncio
 async def test_research_job_flow():
     JOB_STORE.clear()
     payload = {"prompt": "Future of renewable energy grid", "settings": {"audience": "Analysts"}}

@@ -73,10 +73,47 @@ type ResearchJob = {
   trust: TrustMetadata;
 };
 
+type ProductFeature = {
+  name: string;
+  description: string;
+  tags: string[];
+};
+
+type SuccessMetric = {
+  name: string;
+  target: string;
+  current_estimate: string;
+};
+
+type UserJourney = {
+  title: string;
+  description: string;
+  steps: string[];
+};
+
+type ArchitectureComponent = {
+  name: string;
+  description: string;
+};
+
+type ProductInfo = {
+  name: string;
+  tagline: string;
+  summary: string;
+  vision: string;
+  goals: string[];
+  features: ProductFeature[];
+  success_metrics: SuccessMetric[];
+  user_journeys: UserJourney[];
+  system_architecture: ArchitectureComponent[];
+  last_updated: string;
+};
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function HomePage() {
   const [prompt, setPrompt] = useState("The future of sustainable AI adoption");
+const [productInfo, setProductInfo] = useState<ProductInfo | null>(null);
   const [job, setJob] = useState<ResearchJob | null>(null);
   const [summaries, setSummaries] = useState<ResearchJobSummary[]>([]);
   const [loading, setLoading] = useState(false);
@@ -88,6 +125,11 @@ export default function HomePage() {
     fetch(`${API_URL}/research-summary`)
       .then((res) => res.json())
       .then((summary) => console.info("Summary", summary))
+      .catch((err) => console.error(err));
+
+    fetch(`${API_URL}/product-info`)
+      .then((res) => res.json())
+      .then((info) => setProductInfo(info))
       .catch((err) => console.error(err));
   }, []);
 
@@ -204,7 +246,22 @@ export default function HomePage() {
               Sign in with Google, submit your research prompt, and receive an infographic, article, and citation pack
               ready for export.
             </p>
+            {productInfo && (
+              <div className="mt-4 space-y-3 rounded-2xl border border-white/20 bg-slate-950/50 p-4 text-left text-sm text-slate-200">
+                <p className="text-xs uppercase tracking-[0.4em] text-slate-400">{productInfo.tagline}</p>
+                <p className="text-sm text-slate-300">{productInfo.summary}</p>
+                <p className="text-xs text-slate-400">Vision: {productInfo.vision}</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {productInfo.goals.map((goal) => (
+                    <div key={goal} className="rounded-xl bg-slate-900/70 p-2 text-xs text-slate-200">
+                      {goal}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+
           <div className="rounded-3xl border border-white/10 bg-white/5 p-6 space-y-6">
             <div>
               <p className="text-xs uppercase text-slate-400">New research</p>
@@ -236,6 +293,19 @@ export default function HomePage() {
               <p className="text-xs text-slate-400">{summaries.length} past jobs</p>
             </div>
             <div className="mt-4 space-y-3">{historyContent}</div>
+            {productInfo && (
+              <div className="mt-6 space-y-3 rounded-2xl border border-dashed border-white/20 bg-slate-950/60 p-4 text-sm text-slate-200">
+                <p className="text-xs uppercase tracking-[0.4em] text-slate-400">System architecture</p>
+                <div className="space-y-2">
+                  {productInfo.system_architecture.map((component) => (
+                    <div key={component.name} className="space-y-1">
+                      <p className="text-xs font-semibold text-white">{component.name}</p>
+                      <p className="text-xs text-slate-400">{component.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         </section>
       </main>
