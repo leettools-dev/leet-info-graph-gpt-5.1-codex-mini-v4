@@ -21,14 +21,7 @@ Focused on answering the “question → shareable, cited infographic + article�
 
 ## Features
 
-- Instant shareable package caching ensures exports download immediately after a job completes, reducing the time to go from question to shareable infographic + article.
-- Added in-product hero, prompt editor, and export instructions that describe how Research Infographic Studio turns a single prompt into a shareable infographic, article, and citation package.
-- Guided prompt composer with audience, tone, citation style, and counterpoint controls that turn questions into structured research jobs ready for AI processing.
-- Trusted research pipeline that combines curated sources, provenance tracking, and reliability scoring to keep citations accurate and traceable.
-- Article + infographic generation that produces a structured narrative alongside timeline, comparison, and callout visual blocks complete with citation markers.
-- Shareable history, versioning, and export bundles (PNG, Markdown, JSON, CSV) so every insight can be revisited, refined, or handed off for publication.
-- Activation insights surface the 40% activation target for signed-in users and guide teams toward generating more valuable research.
-
+- Added comprehensive infographic-focused workflow: prompt editor, Google sign-in messaging, research history, infographic/article detail view, trust metadata, exports, and progress tracking that align with the Research Infographic Studio vision. Done in collaboration with the backend's infographic spec, object generation, and shareable package support.
 ## Getting Started
 
 ### Prerequisites
@@ -44,11 +37,7 @@ Focused on answering the “question → shareable, cited infographic + article�
 
 ### Installation
 
-```bash
-pip install -r backend/requirements.txt
-cd frontend && npm install
-```
-
+- Install backend dependencies with `pip install -r backend/requirements.txt` and frontend dependencies via `cd frontend && npm install` to satisfy the Research Infographic Studio stack.
 ### Local Development
 
 ```bash
