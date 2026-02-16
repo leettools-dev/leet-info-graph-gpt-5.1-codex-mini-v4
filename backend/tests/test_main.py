@@ -68,6 +68,7 @@ async def test_research_job_flow():
         "Key points",
         "Detailed explanation",
         "Implications / applications",
+        "Confidence / uncertainty notes",
         "Limitations / uncertainties",
         "Sources",
     }
@@ -76,6 +77,7 @@ async def test_research_job_flow():
     for section in article["sections"]:
         for citation in section["citations"]:
             assert citation in citation_indexes
+            assert citation >= 1 and citation <= len(citation_indexes)
     for highlight in article["key_points"] + article["implications"]:
         for citation in highlight["citations"]:
             assert citation in citation_indexes
