@@ -58,6 +58,16 @@ async def test_research_job_flow():
     citation_indexes = [source["citation_index"] for source in sources]
     assert citation_indexes == sorted(citation_indexes)
     assert citation_indexes == list(range(1, len(sources) + 1))
+    assert len(sources) >= 5
+    for source in sources:
+        assert source["publisher"]
+        assert source["url"].startswith("https://")
+        assert source["snippet"]
+        assert source.get("publish_date")
+        assert source.get("accessed_at")
+        reliability = source.get("reliability_score")
+        assert isinstance(reliability, float)
+        assert 0.0 <= reliability <= 1.0
     assert article["detailed_explanation"]
     assert article["confidence_note"]
     assert article["implications"]

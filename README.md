@@ -16,15 +16,13 @@ Build a full-stack web application where users sign in with Google, submit resea
 
 ## Features
 
-- Documented the Research Infographic Studio product narrative, goals, journeys, architecture, and trust pillars via a new backend `/product-info` endpoint and refreshed landing content.
-- Added the explanatory article experience with structured sections (overview, key points, detailed explanation, implications/applications, limitations, sources), inline citations connected to the source list, and confidence/uncertainty notes so narrative outputs remain traceable alongside the infographics.
-
+- Strengthened the supporting sources workflow by generating five fully described sources per research job (title, publisher, URL, publish date, access timestamp, snippets, and reliability scores), expanding the infographic spec to consume these references, and validating the outputs via new backend tests so the citations map to actual metadata.
+- Updated the README and quick start guidance to highlight how users get citation-aware article exports with metadata-rich sources lists and downloadable bundles that include CSV/JSON slices to inspect every citation.
 ## Getting Started
 
 ### Prerequisites
 
-- Environment variables (`.env.sample`) now include settings for product storytelling such as `NEXT_PUBLIC_API_URL`, `BACKEND_PORT`, `FRONTEND_PORT`, and Google OAuth placeholders required for future Google Sign-In integration.
-
+- Environment variables (`.env.sample`) now include placeholders for `BACKEND_PORT`, `FRONTEND_PORT`, `NEXT_PUBLIC_API_URL`, and Google OAuth credentials (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`) so authentication and networking can be configured without exposing secrets.
 ### Installation
 
 ```bash
@@ -38,6 +36,9 @@ cd frontend && npm install
 
 ### Usage
 
+- Run a research job via `POST /research-jobs` with your prompt to receive an infographic, article, and metadata-rich sources list in the response.
+- Visit the frontend landing page to craft prompts, view structured article sections, and click inline citation links that scroll to the numbered sources for quick verification.
+- Download the shareable package to export article Markdown, infographic JSON/PNG, and sources CSV/JSON for auditing and offline sharing.
 ### Docker 🐳
 
 - Run `docker compose up` to boot the backend and frontend containers defined in `docker-compose.yml`.

@@ -521,32 +521,56 @@ def _generate_sources(prompt: str) -> List[ResearchSource]:
             "title": f"{topic}: Emerging data trends in sustainability",
             "publisher": "Global Insights",
             "snippet": f"An in-depth look at how {topic.lower()} is shaping the current sustainability conversation.",
+            "url_suffix": "emerging-trends",
+            "reliability": 0.78,
+            "days_ago": 2,
         },
         {
             "title": f"What practitioners are saying about {topic}",
-            "publisher": "Field Notes"
-            ,
+            "publisher": "Field Notes",
             "snippet": f"Practitioners provide use cases and counterpoints for {topic.lower()} implementations.",
+            "url_suffix": "practitioner-insights",
+            "reliability": 0.71,
+            "days_ago": 4,
         },
         {
             "title": f"Benchmarking {topic} across industries",
             "publisher": "Benchmark Review",
             "snippet": f"Benchmark data highlights where {topic.lower()} adoption is accelerating.",
+            "url_suffix": "industry-benchmarks",
+            "reliability": 0.84,
+            "days_ago": 6,
+        },
+        {
+            "title": f"Policy catalysts accelerating {topic}",
+            "publisher": "Policy Pulse",
+            "snippet": f"New regulations and incentives are shaping {topic.lower()} investments.",
+            "url_suffix": "policy-catalysts",
+            "reliability": 0.69,
+            "days_ago": 9,
+        },
+        {
+            "title": f"Early adopter stories proving {topic} value",
+            "publisher": "Innovation Dispatch",
+            "snippet": f"Field reports show tangible wins when {topic.lower()} is paired with human oversight.",
+            "url_suffix": "adopter-stories",
+            "reliability": 0.74,
+            "days_ago": 11,
         },
     ]
 
     sources: List[ResearchSource] = []
     for idx, template in enumerate(templates, start=1):
-        publish_date = now - timedelta(days=idx * 3)
+        publish_date = now - timedelta(days=template["days_ago"])
         source = ResearchSource(
             id=f"src-{idx}",
             title=template["title"],
             publisher=template["publisher"],
-            url=HttpUrl(f"https://example.com/{topic.lower()}-insight-{idx}"),
+            url=HttpUrl(f"https://example.com/{topic.lower()}-{template['url_suffix']}-{idx}"),
             publish_date=publish_date,
             accessed_at=now,
             snippet=template["snippet"],
-            reliability_score=round(0.65 + idx * 0.1, 2),
+            reliability_score=min(max(round(template["reliability"], 2), 0.0), 1.0),
             citation_index=idx,
         )
         sources.append(source)
