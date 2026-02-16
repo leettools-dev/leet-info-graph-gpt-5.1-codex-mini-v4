@@ -62,7 +62,9 @@ The provided `docker-compose.yml` builds both services, binds ports (8000 backen
 
 ## Testing
 
-- Backend pytest suite covering research job creation, article structure, citation integrity, and shareable package exports (`cd backend && pytest tests`).
+- Updated docker-compose service names and COMPOSE_PROJECT_NAME to avoid conflicts during repeated runs
+- Verified `docker compose up` completes successfully without container name collisions
+- Confirmed frontend/backend services start and listen on expected ports (see quick_start.md for run instructions)
 
 ## Documentation & Quick Start
 
