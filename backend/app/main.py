@@ -37,6 +37,14 @@ app.add_middleware(
 )
 
 
+
+def _load_font(size: int, bold: bool = False) -> ImageFont.ImageFont:
+    font_name = "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"
+    try:
+        return ImageFont.truetype(font_name, size)
+    except OSError:
+        return ImageFont.load_default()
+
 class ResearchJobSettings(BaseModel):
     audience: Optional[str] = Field(None, description="Target audience (e.g., educators)")
     tone: Optional[str] = Field(None, description="Tone preference (e.g., conversational)")
@@ -892,9 +900,92 @@ def _build_shareable_package(job: ResearchJob) -> io.BytesIO:
         archive.writestr("sources.json", sources_json)
         archive.writestr("sources.csv", sources_csv)
         archive.writestr("trust.json", trust_json)
+        archive.writestr("infographic.png", _render_infographic_image(job.infographic_spec))
 
     buffer.seek(0)
     return buffer
+
+
+
+
+def _render_infographic_image(spec: InfographicSpec) -> bytes:
+    width, height = 1200, 900
+    background = Image.new("RGB", (width, height), (8, 15, 30))
+    draw = ImageDraw.Draw(background)
+    margin = 60
+    title_font = _load_font(48, bold=True)
+    subtitle_font = _load_font(26)
+    body_font = _load_font(20)
+    small_font = _load_font(16)
+    caption_font = _load_font(14)
+
+    draw.text((margin, margin), spec.title, font=title_font, fill=(255, 255, 255))
+    draw.text((margin, margin + 54), spec.visual_focus, font=subtitle_font, fill=(191, 219, 254))
+    generated_at = spec.generated_at.strftime("%b %d, %Y %H:%M UTC")
+    draw.text(
+        (margin, margin + 96),
+        f"Layout • {spec.layout} • Generated {generated_at}",
+        font=small_font,
+        fill=(148, 163, 184),
+    )
+
+    callout_gap = 12
+    callout_height = 60
+    callouts = spec.callouts or []
+    callout_width = (width - margin * 2 - (len(callouts) - 1) * callout_gap - 1) // max(len(callouts), 1)
+    for idx, callout in enumerate(callouts[:3]):
+        x0 = margin + idx * (callout_width + callout_gap)
+        y0 = margin + 140
+        x1 = x0 + callout_width
+        y1 = y0 + callout_height
+        draw.rounded_rectangle((x0, y0, x1, y1), radius=16, fill=(19, 24, 43), outline=(79, 70, 229))
+        draw.text(
+            (x0 + 14, y0 + 16),
+            textwrap.shorten(callout, width=48, placeholder="…"),
+            font=small_font,
+            fill=(226, 232, 240),
+        )
+
+    block_start_y = margin + 220
+    cols = 2
+    card_gap = 24
+    card_width = (width - margin * 2 - (cols - 1) * card_gap) // cols
+    card_height = 160
+    for idx, block in enumerate(spec.blocks):
+        row = idx // cols
+        col = idx % cols
+        x0 = margin + col * (card_width + card_gap)
+        y0 = block_start_y + row * (card_height + card_gap)
+        x1 = x0 + card_width
+        y1 = y0 + card_height
+        draw.rounded_rectangle((x0, y0, x1, y1), radius=18, fill=(17, 24, 39))
+        draw.text((x0 + 18, y0 + 14), block.headline, font=body_font, fill=(255, 255, 255))
+        draw.text(
+            (x0 + 18, y0 + 48),
+            textwrap.shorten(block.description, width=120, placeholder="…"),
+            font=small_font,
+            fill=(148, 163, 184),
+        )
+        metric_y = y0 + 94
+        if block.metric:
+            draw.text((x0 + 18, metric_y), block.metric, font=small_font, fill=(16, 185, 129))
+            metric_y += 22
+        else:
+            metric_y += 6
+        if block.citation_ids:
+            citations_text = ", ".join(f"[{cid}]" for cid in block.citation_ids[:3])
+            draw.text((x0 + 18, metric_y), f"Citations: {citations_text}", font=caption_font, fill=(59, 130, 246))
+
+    bottom_y = height - margin - 60
+    draw.line((margin, bottom_y - 18, width - margin, bottom_y - 18), fill=(99, 102, 241), width=2)
+    markers = " ".join(spec.citation_markers)
+    draw.text((margin, bottom_y - 12), f"Sources: {markers}", font=caption_font, fill=(168, 85, 247))
+    draw.text((margin, bottom_y + 12), f"Visual focus: {spec.visual_focus}", font=small_font, fill=(148, 163, 184))
+
+    buffer = io.BytesIO()
+    background.save(buffer, format="PNG")
+    buffer.seek(0)
+    return buffer.getvalue()
 
 
 @app.get("/health")

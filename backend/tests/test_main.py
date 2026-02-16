@@ -101,6 +101,7 @@ async def test_research_job_flow():
         names = archive.namelist()
     assert "article.md" in names
     assert "infographic.json" in names
+    assert "infographic.png" in names
     assert "sources.json" in names
     assert "sources.csv" in names
 
@@ -109,6 +110,12 @@ async def test_research_job_flow():
         with archive.open("article.md") as article_file:
             article_text = article_file.read().decode("utf-8")
     assert job_data["article"]["title"] in article_text
+
+    buffer.seek(0)
+    with zipfile.ZipFile(buffer) as archive:
+        with archive.open("infographic.png") as png_file:
+            png_bytes = png_file.read()
+    assert png_bytes.startswith(b"\x89PNG\r\n\x1a\n")
 
     buffer.seek(0)
     with zipfile.ZipFile(buffer) as archive:
