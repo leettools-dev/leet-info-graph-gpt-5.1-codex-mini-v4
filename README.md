@@ -21,7 +21,8 @@ Focused on answering the “question → shareable, cited infographic + article�
 
 ## Features
 
-- Added comprehensive infographic-focused workflow: prompt editor, Google sign-in messaging, research history, infographic/article detail view, trust metadata, exports, and progress tracking that align with the Research Infographic Studio vision. Done in collaboration with the backend's infographic spec, object generation, and shareable package support.
+- Documented the explanatory article experience with structured sections, inline citations that link to the sources list, and confidence/uncertainty notes so users understand how to review trust metadata before sharing.
+
 ## Getting Started
 
 ### Prerequisites
@@ -61,11 +62,7 @@ The provided `docker-compose.yml` builds both services, binds ports (8000 backen
 
 ## Testing
 
-Run the backend test suite before committing:
-
-```bash
-cd backend && pytest tests
-```
+- Backend pytest suite covering research job creation, article structure, citation integrity, and shareable package exports (`cd backend && pytest tests`).
 
 ## Documentation & Quick Start
 
