@@ -38,10 +38,12 @@ cd frontend && npm install
 
 ### Usage
 
-```
-./start.sh   # stops existing services, launches backend + frontend, prints access URLs
-./stop.sh    # stops running services gracefully using stored PIDs
-```
+### Docker 🐳
+
+- Run `docker compose up` to boot the backend and frontend containers defined in `docker-compose.yml`.
+- Use `COMPOSE_PROJECT_NAME` or the default prefixes to keep container names consistent with your development environment.
+- Ensure `.env` provides `BACKEND_PORT`, `FRONTEND_PORT`, `NEXT_PUBLIC_API_URL`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` before starting the stack.
+
 # Usage examples will be added
 ```
 
