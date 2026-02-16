@@ -1,5 +1,6 @@
 services:
   backend:
+    container_name: "research-infographic-backend-${RUN_ID:-default}"
     build:
       context: ./backend
     ports:
@@ -8,6 +9,7 @@ services:
       - .env
     command: uvicorn app.main:app --host 0.0.0.0 --port ${BACKEND_PORT:-8000}
   frontend:
+    container_name: "research-infographic-frontend-${RUN_ID:-default}"
     build:
       context: ./frontend
     ports:
