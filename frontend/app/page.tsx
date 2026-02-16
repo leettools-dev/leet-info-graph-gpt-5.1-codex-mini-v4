@@ -267,7 +267,7 @@ export default function HomePage() {
     ));
   }, [summaries]);
 
-  const refineTextSettings = [
+  const refineTextSettings: { label: string; key: RefineTextSettingKey }[] = [
     { label: "Audience", key: "audience" },
     { label: "Tone", key: "tone" },
     { label: "Length", key: "length" },
