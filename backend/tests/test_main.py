@@ -4,7 +4,12 @@ import zipfile
 from datetime import datetime
 
 from httpx import AsyncClient
+from pathlib import Path
 from pytest import mark
+import sys
+
+root = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(root))
 
 from backend.app.main import app, JOB_STORE
 

@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
     "next": "13.4.16",
@@ -13,9 +14,15 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+<<<<<<< HEAD
     "@types/node": "^20.5.1",
     "@types/react": "^18.3.2",
     "@types/react-dom": "^18.3.2",
     "typescript": "5.2.2"
+=======
+    "@types/node": "20.8.0",
+    "@types/react": "18.3.0",
+    "typescript": "5.5.4"
+>>>>>>> dev#feature#research-infographic-studio
   }
 }
