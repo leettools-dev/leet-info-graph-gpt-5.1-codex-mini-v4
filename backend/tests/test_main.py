@@ -176,6 +176,21 @@ async def test_research_job_flow():
         assert entry["accessed_at"]
         assert 0.0 <= entry["reliability_score"] <= 1.0
 
+    trust = job_data["trust"]
+    assert trust["confidence_note"] == job_data["article"]["confidence_note"]
+    provenance_records = trust["provenance"]
+    assert provenance_records
+    source_ids_set = {source["id"] for source in sources}
+    for record in provenance_records:
+        assert record["source_ids"]
+        assert set(record["source_ids"]).issubset(source_ids_set)
+
+    buffer.seek(0)
+    with zipfile.ZipFile(buffer) as archive:
+        with archive.open("trust.json") as trust_file:
+            trust_json = json.load(trust_file)
+    assert trust_json == trust
+
     buffer.seek(0)
     with zipfile.ZipFile(buffer) as archive:
         with archive.open("article.md") as article_file:

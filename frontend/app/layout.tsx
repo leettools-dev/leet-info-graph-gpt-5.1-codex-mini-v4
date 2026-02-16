@@ -1,33 +1,17 @@
-<<<<<<< HEAD
+import type { ReactNode } from "react";
+
 import "./globals.css";
 
 export const metadata = {
   title: "Research Infographic Studio",
-  description: "AI-generated infographic, article, and sources in a single shareable package.",
-};
-=======
-import type { ReactNode } from 'react'
-
-export const metadata = {
-  title: 'Research Infographic Studio',
   description:
-    'A Research Infographic Studio landing page that highlights the AI-powered workflow for generating infographics, articles, and citations.',
-}
->>>>>>> dev#feature#research-infographic-studio
+    "A Research Infographic Studio landing page that highlights the AI-powered workflow for generating infographics, articles, and citations.",
+};
 
 export default function RootLayout({
   children,
 }: {
-<<<<<<< HEAD
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-      <body className="bg-slate-950 text-white min-h-screen">{children}</body>
-    </html>
-  );
-=======
-  children: ReactNode
+  children: ReactNode;
 }) {
   return (
     <html lang="en">
@@ -37,6 +21,5 @@ export default function RootLayout({
         </div>
       </body>
     </html>
-  )
->>>>>>> dev#feature#research-infographic-studio
+  );
 }
