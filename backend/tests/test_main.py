@@ -208,3 +208,30 @@ async def test_research_job_flow():
     assert article_response.status_code == 200
     assert article_response.headers["content-type"].startswith("text/markdown")
     assert job_data["article"]["title"] in article_response.text
+
+
+@mark.asyncio
+async def test_refine_creates_new_version():
+    JOB_STORE.clear()
+    payload = {"prompt": "Future of renewable energy grid", "settings": {"audience": "Analysts"}}
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        create_response = await client.post("/research-jobs", json=payload)
+    assert create_response.status_code == 200
+    original_job = create_response.json()
+    job_id = original_job["job_id"]
+
+    refined_payload = {"prompt": "Refined focus on storage+grid resilience", "settings": {"audience": "Leaders"}}
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        refine_response = await client.post(f"/research-jobs/{job_id}/refine", json=refined_payload)
+    assert refine_response.status_code == 200
+    refined_job = refine_response.json()
+    assert refined_job["parent_job_id"] == job_id
+    assert refined_job["version"] == original_job["version"] + 1
+    assert refined_job["prompt"] == refined_payload["prompt"]
+    assert refined_job["settings"]["audience"] == refined_payload["settings"]["audience"]
+    assert refined_job["user_id"] == original_job["user_id"]
+    assert refined_job["article"]
+    assert refined_job["infographic_spec"]
+    assert refined_job["sources"]
+    assert refined_job["shareable_package_ready"] is True
+    assert refined_job["trust"]["confidence_note"] == refined_job["article"]["confidence_note"]
