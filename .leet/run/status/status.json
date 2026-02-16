@@ -1,9 +1,9 @@
 {
-  "state": "building",
+  "state": "waiting_healthy",
   "workspace_path": "/usr/local/leettools/repo/leet-info-graph-gpt-5.1-codex-mini-v4",
-  "message": "Processing start request: request-1771203172741",
-  "last_change_detected": "2026-02-16T00:54:40.613778+00:00",
-  "timestamp": "2026-02-16T00:54:40.614397+00:00",
+  "message": "",
+  "last_change_detected": "2026-02-16T00:55:15.720317+00:00",
+  "timestamp": "2026-02-16T00:55:18.314507+00:00",
   "services": [],
   "log_file": ""
 }
