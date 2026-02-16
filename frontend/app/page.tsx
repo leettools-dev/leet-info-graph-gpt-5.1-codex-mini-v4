@@ -42,6 +42,7 @@ type ResearchSource = {
   snippet: string;
   reliability_score: number;
   accessed_at: string;
+  publish_date?: string | null;
   citation_index: number;
 };
 
@@ -112,6 +113,9 @@ type ProductInfo = {
 };
 
 const formatDate = (iso: string) => new Date(iso).toLocaleString();
+const formatOptionalDate = (iso?: string | null) => (iso ? new Date(iso).toLocaleString() : "Unknown");
+const formatReliability = (score: number) => `${Math.round(score * 100)}% reliability`;
+
 const initialPrompt = "The future of sustainable AI adoption";
 export const dynamic = "force-dynamic";
 
@@ -456,7 +460,10 @@ export default function HomePage() {
                   >
                     <p className="text-xs uppercase tracking-wide text-slate-500">[{source.citation_index}] {source.publisher}</p>
                     <p className="text-sm font-semibold text-white">{source.title}</p>
-                    <p className="text-xs text-slate-400">{source.snippet}</p>
+                    <p className="text-[0.7rem] text-slate-500">
+                      Published {formatOptionalDate(source.publish_date)} · Accessed {formatDate(source.accessed_at)} · {formatReliability(source.reliability_score)}
+                    </p>
+                    <p className="text-xs text-slate-400 italic">{source.snippet}</p>
                     <a
                       href={source.url}
                       className="text-xs text-indigo-300"
