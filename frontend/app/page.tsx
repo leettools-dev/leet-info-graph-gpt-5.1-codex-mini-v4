@@ -112,6 +112,23 @@ type ProductInfo = {
   last_updated: string;
 };
 
+type ExportAsset = "infographic" | "article";
+
+const EXPORT_CONFIG: Record<ExportAsset, { label: string; busyLabel: string; endpoint: string; filenameSuffix: string }> = {
+  infographic: {
+    label: "Export PNG",
+    busyLabel: "Exporting PNG…",
+    endpoint: "infographic",
+    filenameSuffix: "-infographic.png",
+  },
+  article: {
+    label: "Export article",
+    busyLabel: "Exporting article…",
+    endpoint: "article",
+    filenameSuffix: "-article.md",
+  },
+};
+
 const formatDate = (iso: string) => new Date(iso).toLocaleString();
 const formatOptionalDate = (iso?: string | null) => (iso ? new Date(iso).toLocaleString() : "Unknown");
 const formatReliability = (score: number) => `${Math.round(score * 100)}% reliability`;
@@ -128,6 +145,8 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [downloadingPackage, setDownloadingPackage] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [exportingAsset, setExportingAsset] = useState<ExportAsset | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/product-info`)
@@ -207,6 +226,34 @@ export default function HomePage() {
       setDownloadError((err as Error).message);
     } finally {
       setDownloadingPackage(false);
+    }
+  }
+
+  async function handleExportAsset(asset: ExportAsset) {
+    if (!job) {
+      return;
+    }
+    setExportingAsset(asset);
+    setExportError(null);
+    try {
+      const response = await fetch(`${API_URL}/research-jobs/${job.job_id}/${EXPORT_CONFIG[asset].endpoint}`);
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || `Failed to export ${asset}`);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `research-${job.job_id}${EXPORT_CONFIG[asset].filenameSuffix}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError((err as Error).message);
+    } finally {
+      setExportingAsset((current) => (current === asset ? null : current));
     }
   }
 
@@ -362,12 +409,16 @@ export default function HomePage() {
             <p className="text-sm text-slate-500">Confidence: {job.article.confidence}</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <button className="rounded-2xl bg-indigo-500 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white">
-              Export PNG
-            </button>
-            <button className="rounded-2xl border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white/80">
-              Export article
-            </button>
+            {(['infographic', 'article'] as ExportAsset[]).map((asset) => (
+              <button
+                key={asset}
+                className="rounded-2xl border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition disabled:border-white/30 disabled:text-white/50"
+                onClick={() => handleExportAsset(asset)}
+                disabled={exportingAsset !== null}
+              >
+                {exportingAsset === asset ? EXPORT_CONFIG[asset].busyLabel : EXPORT_CONFIG[asset].label}
+              </button>
+            ))}
             <button
               className="rounded-2xl bg-emerald-500 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-emerald-400 disabled:bg-emerald-700"
               onClick={handleDownloadPackage}
@@ -377,6 +428,7 @@ export default function HomePage() {
             </button>
           </div>
           {downloadError && <p className="text-xs text-red-400">{downloadError}</p>}
+          {exportError && <p className="text-xs text-red-400">{exportError}</p>}
         </header>
         <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
           <div className="space-y-6">

@@ -181,3 +181,15 @@ async def test_research_job_flow():
         with archive.open("article.md") as article_file:
             article_with_cached = article_file.read().decode("utf-8")
     assert job_data["article"]["title"] in article_with_cached
+
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        infographic_response = await client.get(f"/research-jobs/{job_id}/infographic")
+    assert infographic_response.status_code == 200
+    assert infographic_response.headers["content-type"] == "image/png"
+    assert infographic_response.content.startswith(b"\x89PNG\r\n\x1a\n")
+
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        article_response = await client.get(f"/research-jobs/{job_id}/article")
+    assert article_response.status_code == 200
+    assert article_response.headers["content-type"].startswith("text/markdown")
+    assert job_data["article"]["title"] in article_response.text
