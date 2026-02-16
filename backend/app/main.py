@@ -1200,6 +1200,32 @@ async def download_shareable_package(job_id: str) -> StreamingResponse:
     return StreamingResponse(buffer, media_type="application/zip", headers=headers)
 
 
+@app.post("/research-jobs/{job_id}/refine", response_model=ResearchJob)
+async def refine_research_job(job_id: str, payload: ResearchJobRefine) -> ResearchJob:
+    try:
+        parent_job = JOB_STORE.get_job(job_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+    if payload.prompt:
+        refined_prompt = payload.prompt.strip()
+        if not refined_prompt:
+            raise HTTPException(status_code=422, detail="Prompt cannot be empty")
+    else:
+        refined_prompt = parent_job.prompt
+
+    refined_settings = payload.settings or parent_job.settings
+
+    job = JOB_STORE.create_job(
+        refined_prompt,
+        refined_settings,
+        trust_targets=payload.trust_targets,
+        parent_job=parent_job,
+        user_id=parent_job.user_id,
+    )
+    return job
+
+
 @app.get("/research-jobs/{job_id}/infographic")
 async def download_infographic(job_id: str) -> StreamingResponse:
     try:

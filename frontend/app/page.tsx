@@ -63,12 +63,23 @@ type ResearchArticle = {
   sections: { heading: string; body: string; citations: number[] }[];
 };
 
+type ResearchJobSettings = {
+  audience?: string | null;
+  tone?: string | null;
+  length?: string | null;
+  citation_style?: string | null;
+  time_range?: string | null;
+  region?: string | null;
+  include_counterpoints?: boolean;
+};
+
 type ResearchJob = {
   job_id: string;
   prompt: string;
   summary: string;
   status: string;
   version: number;
+  settings: ResearchJobSettings;
   infographic_spec: InfographicSpec;
   article: ResearchArticle;
   sources: ResearchSource[];
@@ -113,6 +124,7 @@ type ProductInfo = {
 };
 
 type ExportAsset = "infographic" | "article";
+type HistoryAction = "open" | "refine";
 
 const EXPORT_CONFIG: Record<ExportAsset, { label: string; busyLabel: string; endpoint: string; filenameSuffix: string }> = {
   infographic: {
@@ -147,6 +159,13 @@ export default function HomePage() {
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [exportingAsset, setExportingAsset] = useState<ExportAsset | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [historyLoadingJobId, setHistoryLoadingJobId] = useState<string | null>(null);
+  const [historyLoadError, setHistoryLoadError] = useState<string | null>(null);
+  const [refineMode, setRefineMode] = useState(false);
+  const [refinePrompt, setRefinePrompt] = useState(initialPrompt);
+  const [refineSettings, setRefineSettings] = useState<ResearchJobSettings>({});
+  const [refining, setRefining] = useState(false);
+  const [refineError, setRefineError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${API_URL}/product-info`)
@@ -170,11 +189,28 @@ export default function HomePage() {
     }
 
     return summaries.map((item) => (
-      <div key={item.job_id} className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-1">
+      <div
+        key={item.job_id}
+        className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-1"
+      >
         <p className="text-xs text-slate-400 uppercase tracking-[0.3em]">{item.status}</p>
         <p className="font-semibold text-white">{item.title}</p>
         <p className="text-xs text-slate-500">{item.prompt_snippet}</p>
         <p className="text-xs text-slate-500">Updated {formatDate(item.updated_at)}</p>
+        <div className="flex gap-2">
+          <button
+            className="text-xs text-indigo-300 underline"
+            onClick={() => handleHistoryAction(item.job_id, "open")}
+          >
+            Open
+          </button>
+          <button
+            className="text-xs text-indigo-300 underline"
+            onClick={() => handleHistoryAction(item.job_id, "refine")}
+          >
+            Refine
+          </button>
+        </div>
       </div>
     ));
   }, [summaries]);
@@ -198,6 +234,29 @@ export default function HomePage() {
       setError((err as Error).message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleHistoryAction(jobId: string, action: HistoryAction) {
+    setHistoryLoadingJobId(jobId);
+    setHistoryLoadError(null);
+    try {
+      const response = await fetch(`${API_URL}/research-jobs/${jobId}`);
+      if (!response.ok) {
+        throw new Error("Failed to load history entry");
+      }
+      const data = await response.json();
+      if (action === "open") {
+        setJob(data);
+      } else {
+        setRefinePrompt(data.prompt);
+        setJob(data);
+        setRefineMode(true);
+      }
+    } catch (err) {
+      setHistoryLoadError((err as Error).message);
+    } finally {
+      setHistoryLoadingJobId(null);
     }
   }
 
@@ -364,6 +423,12 @@ export default function HomePage() {
                 disabled={loading}
               >
                 {loading ? "Generating…" : "Generate infographic"}
+              </button>
+              <button
+                className="rounded-2xl border border-white/30 px-5 py-2 text-xs uppercase tracking-wide text-white/70"
+                onClick={() => setRefineMode(true)}
+              >
+                Refine previous job
               </button>
               <button className="rounded-2xl border border-white/30 px-5 py-2 text-xs uppercase tracking-wide text-white/70">
                 Settings
