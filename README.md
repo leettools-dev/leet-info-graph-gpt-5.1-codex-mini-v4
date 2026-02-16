@@ -21,7 +21,7 @@ Focused on answering the “question → shareable, cited infographic + article�
 
 ## Features
 
-- Captured telemetry warning during Next.js build; runs cleanly after `npm install` validation.
+- Verified Docker Compose startup: backend and frontend services build and start cleanly, with logs available for debugging.
 
 ## Getting Started
 
