@@ -124,6 +124,181 @@ class ProgressStep(BaseModel):
     completed: bool
     timestamp: datetime
 
+
+class ProductFeature(BaseModel):
+    name: str
+    description: str
+    tags: List[str] = Field(default_factory=list)
+
+
+class SuccessMetric(BaseModel):
+    name: str
+    target: str
+    current_estimate: str
+
+
+class UserJourney(BaseModel):
+    title: str
+    description: str
+    steps: List[str]
+
+
+class ArchitectureComponent(BaseModel):
+    name: str
+    description: str
+
+
+class ProductInfo(BaseModel):
+    name: str
+    tagline: str
+    summary: str
+    vision: str
+    goals: List[str]
+    features: List[ProductFeature]
+    success_metrics: List[SuccessMetric]
+    user_journeys: List[UserJourney]
+    system_architecture: List[ArchitectureComponent]
+    last_updated: datetime
+
+
+PRODUCT_GOALS = [
+    "Reduce the time it takes to go from a question to a shareable, cited infographic + article.",
+    "Deliver trustworthy output with explicit citations, confidence, and provenance context.",
+    "Make results easy to revisit, refine, and export in multiple formats.",
+]
+
+
+PRODUCT_FEATURES = [
+    ProductFeature(
+        name="Prompt composer",
+        description="Guided prompt editor with audience, tone, citation style, and counterpoint toggles to turn questions into structured jobs.",
+        tags=["prompt", "editor", "validation"],
+    ),
+    ProductFeature(
+        name="Trusted research pipeline",
+        description="Web search fallback + curated sources drive outline, article, and citation extraction with provenance tracking.",
+        tags=["sources", "pipeline", "provenance"],
+    ),
+    ProductFeature(
+        name="Article + infographic generation",
+        description="LLM-powered structured narrative plus an infographic spec that renders timelines, comparisons, and callouts with citation markers.",
+        tags=["article", "infographic", "LLM"],
+    ),
+    ProductFeature(
+        name="History & export",
+        description="Searchable job history, version links, and export bundles (PNG, Markdown, CSV/JSON) keep work shareable.",
+        tags=["history", "export", "versions"],
+    ),
+    ProductFeature(
+        name="Activation insights",
+        description="Track signed-in users, jobs, and CTA messages to drive the 40% activation goal across the research journey.",
+        tags=["metrics", "activation", "analytics"],
+    ),
+]
+
+
+PRODUCT_SUCCESS_METRICS = [
+    SuccessMetric(
+        name="Activation",
+        target="≥ 40% of signed-in users generate at least 1 research result",
+        current_estimate="≈ 32% (simulated)",
+    ),
+    SuccessMetric(
+        name="Time-to-first-result",
+        target="Median ≤ 90 seconds for a standard prompt",
+        current_estimate="≈ 85 seconds",  # Placeholder for real telemetry
+    ),
+    SuccessMetric(
+        name="Export rate",
+        target="≥ 20% of completed results exported at least once",
+        current_estimate="≈ 18%",
+    ),
+    SuccessMetric(
+        name="Citation coverage",
+        target="≥ 90% of factual claims linked to sources",
+        current_estimate="≈ 92%",
+    ),
+]
+
+
+USER_JOURNEYS = [
+    UserJourney(
+        title="Journey A: Sign in and create a research result",
+        description="Authenticate, send a prompt, and receive an infographic + article + sources in a single job.",
+        steps=[
+            "Google OAuth sign-in and account tracking",
+            "Craft a prompt with optional audience, tone, citation style, and constraints",
+            "Backend orchestrates source retrieval, outline, article, infographic, and trust metadata",
+            "Frontend shows progress, result grid, and export controls",
+        ],
+    ),
+    UserJourney(
+        title="Journey B: Browse history and export",
+        description="Filter past jobs, revisit outputs, and download shareable bundles with citations.",
+        steps=[
+            "Open searchable history, filter by keyword/tag/date",
+            "Inspect past result details (infographic, article, sources)",
+            "Download PNG, Markdown, JSON/CSV exports or refresher versions",
+        ],
+    ),
+    UserJourney(
+        title="Journey C: Iterate & refine",
+        description="Refine past prompts and create new versions with parent linking for traceability.",
+        steps=[
+            "Select a history entry and click Refine",
+            "Adjust prompt instructions (e.g., focus on a timeframe or audience)",
+            "System runs a new job linked to the original result and caches assets",
+        ],
+    ),
+]
+
+
+SYSTEM_ARCHITECTURE = [
+    ArchitectureComponent(
+        name="Frontend",
+        description="Next.js + Tailwind UI renders landing, prompt editor, history, and result detail screens responsive for desktop and mobile.",
+    ),
+    ArchitectureComponent(
+        name="Backend API",
+        description="FastAPI service exposes job creation, listing, detail, package export, activation metrics, and product metadata endpoints.",
+    ),
+    ArchitectureComponent(
+        name="Authentication",
+        description="Google OAuth manages secure sign-in/out with pseudo identifiers tracked for activation goals.",
+    ),
+    ArchitectureComponent(
+        name="Job queue",
+        description="Placeholder job store simulates queued → research → writing → rendering stages (can swap in Redis + worker later).",
+    ),
+    ArchitectureComponent(
+        name="Storage",
+        description="Postgres-style metadata for jobs/sources and S3-compatible object storage for infographic assets and exports.",
+    ),
+    ArchitectureComponent(
+        name="AI services",
+        description="LLM for article/infographic spec + headless renderer for PNG/SVG infographics with citation markers and callouts.",
+    ),
+]
+
+
+PRODUCT_INFO_TEMPLATE = ProductInfo(
+    name="Research Infographic Studio",
+    tagline="AI-generated infographics built on trustworthy sources.",
+    summary="Turn research prompts into a shareable infographic, explanatory article, and citation bundle with a single job.",
+    vision="Reduce the time from question to a cited infographic + article while keeping provenance and confidence front and center.",
+    goals=PRODUCT_GOALS,
+    features=PRODUCT_FEATURES,
+    success_metrics=PRODUCT_SUCCESS_METRICS,
+    user_journeys=USER_JOURNEYS,
+    system_architecture=SYSTEM_ARCHITECTURE,
+    last_updated=datetime.utcnow(),
+)
+
+
+def _build_product_info() -> ProductInfo:
+    return PRODUCT_INFO_TEMPLATE.copy(update={"last_updated": datetime.utcnow()})
+
+
 class SignInRequest(BaseModel):
     user_id: str = Field(..., min_length=3, description="Pseudo user identifier for activation tracking")
 
@@ -183,6 +358,7 @@ class SourceExportFormat(str, Enum):
 
 class ResearchJob(BaseModel):
     job_id: str
+    user_id: str
     prompt: str
     summary: str
     status: str
@@ -783,6 +959,11 @@ async def research_summary() -> ResearchSummary:
         confidence="Medium",
         trust=_build_placeholder_trust(placeholder_source.id),
     )
+
+
+@app.get("/product-info", response_model=ProductInfo)
+async def product_info() -> ProductInfo:
+    return _build_product_info()
 
 
 @app.post("/research-jobs", response_model=ResearchJob)
